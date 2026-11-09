@@ -1,0 +1,17 @@
+{
+  "name": "@regex-js/etapas",
+  "version": "1.0.0",
+  "description": "LFA — Expressões regulares em JavaScript/Node.js (Equipe 2): seis etapas do laboratório",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./node": "./src/node.js"
+  },
+  "scripts": {
+    "test": "node --test \"testes/*.test.js\"",
+    "demo": "node src/demo.js"
+  },
+  "engines": { "node": ">=20" },
+  "license": "MIT"
+}

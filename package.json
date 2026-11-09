@@ -1,0 +1,18 @@
+{
+  "name": "regex-js",
+  "private": true,
+  "description": "Regex em JavaScript — Equipe 2 (LFA, Prof. Luciano Cardoso): etapas do laboratório + site de apresentação",
+  "type": "module",
+  "packageManager": "pnpm@9.15.9",
+  "engines": { "node": ">=22.18" },
+  "scripts": {
+    "test": "pnpm -r --workspace-concurrency=1 test",
+    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm --filter web build",
+    "start": "pnpm --filter server start",
+    "demo": "node equipe_02_javascript/src/demo.js",
+    "relatorio": "node scripts/gerar-relatorio.mjs",
+    "pptx": "node scripts/gerar-pptx.mjs",
+    "entrega": "node scripts/empacotar-entrega.mjs"
+  }
+}

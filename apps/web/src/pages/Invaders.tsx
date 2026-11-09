@@ -89,6 +89,8 @@ export function Invaders() {
     setErro(null);
     const ids = vivas.filter((_, i) => r[i]).map((p) => p.id);
     setEstado((e) => disparar(e, ids));
+    // Disparo feito: limpa o campo para a próxima regex (regex inválida fica para correção).
+    setPadrao('');
   }, [padrao]);
 
   const comecar = () => {

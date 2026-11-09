@@ -91,6 +91,11 @@ body,
 #root {
   height: 100%;
 }
+#root {
+  display: flex;
+  flex-direction: column;
+}
+#root > * { flex-shrink: 0; }
 
 body {
   margin: 0;
@@ -237,6 +242,7 @@ textarea {
 }
 
 .pagina {
+  width: 100%;
   max-width: 1180px;
   margin: 0 auto;
   padding: 2rem 1rem 4rem;
@@ -414,8 +420,9 @@ mark.marca-azul { background: var(--azul-fundo); color: var(--texto); box-shadow
 .resumo-casamentos { color: var(--texto-suave); margin: 0.5rem 0; }
 
 @media (max-width: 860px) {
-  .playground { grid-template-columns: 1fr; }
+  .playground { grid-template-columns: minmax(0, 1fr); }
 }
+.playground code { overflow-wrap: anywhere; }
 
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -439,4 +446,16 @@ textarea,
 .token {
   font-variant-ligatures: none;
   font-feature-settings: 'liga' 0, 'calt' 0;
+}
+
+/* Menu sempre visível: compacto no celular para não roubar a tela. */
+@media (max-width: 640px) {
+  .nav {
+    gap: 0.4rem 0.9rem;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.9rem;
+  }
+  .nav ul { gap: 0.4rem 0.8rem; }
+  .nav .alternar-tema { padding: 0.1em 0.5em; font-size: 0.8rem; }
+  .nav .tema-prefixo { display: none; }
 }

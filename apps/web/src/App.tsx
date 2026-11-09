@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { NavLink, Route, Routes, useLocation } from 'react-router-dom';
+import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { Slides } from './pages/Slides.tsx';
 import { Playground } from './pages/Playground.tsx';
 import { LimiteDeErro } from './components/LimiteDeErro.tsx';
@@ -20,6 +20,8 @@ function lerTema(): Tema {
 }
 
 function Nav() {
+  const { pathname } = useLocation();
+  const nosSlides = pathname === '/' || pathname.startsWith('/slide/');
   const [tema, setTema] = useState<Tema>(lerTema);
 
   useEffect(() => {
@@ -34,20 +36,25 @@ function Nav() {
   }, [tema]);
 
   const proximo: Record<Tema, Tema> = { auto: 'claro', claro: 'escuro', escuro: 'auto' };
-  const nomeTema: Record<Tema, string> = { auto: 'Tema: automático', claro: 'Tema: caderno', escuro: 'Tema: lousa' };
+  const nomeTema: Record<Tema, string> = { auto: 'automático', claro: 'caderno', escuro: 'lousa' };
 
   return (
     <nav className="nav" aria-label="Principal">
-      <NavLink to="/" className="marca-site">
+      <Link to="/" className="marca-site">
         /regex<span>-js</span>/
-      </NavLink>
+      </Link>
       <ul>
-        <li><NavLink to="/" end>Slides</NavLink></li>
+        <li>
+          <Link to="/" aria-current={nosSlides ? 'page' : undefined}>
+            Slides
+          </Link>
+        </li>
         <li><NavLink to="/playground">Playground</NavLink></li>
         <li><NavLink to="/invaders">Regex Invaders</NavLink></li>
         <li><NavLink to="/arena">Regex Arena</NavLink></li>
       </ul>
       <button type="button" className="secundario alternar-tema" onClick={() => setTema(proximo[tema])}>
+        <span className="tema-prefixo">Tema: </span>
         {nomeTema[tema]}
       </button>
     </nav>
@@ -56,12 +63,10 @@ function Nav() {
 
 export function App() {
   const { pathname } = useLocation();
-  // Nos slides e na Arena a navegação fica escondida (modo apresentação / celular).
-  const telaCheia = pathname === '/' || pathname.startsWith('/slide/') || pathname.startsWith('/arena');
 
   return (
     <>
-      {!telaCheia && <Nav />}
+      <Nav />
       <LimiteDeErro chave={pathname}>
       <Suspense fallback={<p className="pagina">Carregando…</p>}>
         <Routes>

@@ -1,6 +1,6 @@
 /* ---------- Estrutura da apresentação ---------- */
 .slides {
-  min-height: 100%;
+  flex: 1 0 auto;
   display: flex;
   flex-direction: column;
 }
@@ -374,3 +374,4 @@ textarea.log { font-size: 0.82rem; white-space: pre; overflow-x: auto; }
 .slide-demo .celula { min-width: 1.45em; height: 1.75em; }
 .rolagem-x { overflow-x: auto; }
 .tabela-comparacao td.mono { overflow-wrap: anywhere; }
+.slide-capa .slide { padding-bottom: 4.5rem; }

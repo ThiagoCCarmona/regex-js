@@ -128,7 +128,8 @@
 
 /* Telão */
 .telao {
-  min-height: 100%;
+  flex: 1 0 auto;
+  width: 100%;
   padding: clamp(1rem, 3vh, 2rem) clamp(1rem, 4vw, 3.5rem);
   display: grid;
   grid-template-columns: minmax(0, 3fr) minmax(280px, 2fr);

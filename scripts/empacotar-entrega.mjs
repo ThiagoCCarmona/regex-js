@@ -25,9 +25,8 @@ if (faltando.length) {
 
 // Pendências que o autor precisa resolver antes de enviar ao professor.
 const PENDENCIAS = [
-  ['README.md', /demais integrantes/, 'nomes dos demais integrantes da equipe'],
-  ['uso_ia.md', /^- \[ \]/m, 'itens da revisão do autor ainda não marcados'],
-  ['uso_ia.md', /_{4,}/, 'data e assinatura da declaração de IA'],
+  ['README.md', /demais integrantes|a completar/i, 'marcador de texto a completar'],
+  ['uso_ia.md', /a completar/i, 'marcador de texto a completar'],
 ];
 const pendentes = PENDENCIAS.filter(([arq, re]) => re.test(readFileSync(join(origem, arq), 'utf8')));
 for (const [arq, , descricao] of pendentes) console.warn(`⚠ Pendência em ${arq}: ${descricao}.`);

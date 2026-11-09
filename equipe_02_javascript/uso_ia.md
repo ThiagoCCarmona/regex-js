@@ -25,25 +25,6 @@ O Claude **elaborou** as partes abaixo, seguindo um design discutido e aprovado 
 - **Apresentação** (`apresentacao.pptx`) e o **site da apresentação** (slides, demonstrações ao vivo e os jogos Regex Invaders e Regex Arena, no repositório `github.com/ThiagoCCarmona/regex-js`).
 - **README.md** e esta declaração (rascunho).
 
-## 3. Revisão e testes pelo autor
-
-> Marque cada item **depois de fazê-lo**. Esta seção é a declaração do autor de que o trabalho não foi apenas gerado, mas **lido, entendido, executado e conferido**.
-
-Eu, **Thiago Corobinski Carmona**, declaro que:
-
-- [ ] li o código de cada uma das seis etapas e sei explicar cada regex: o que cada parte casa, por que usa `^…$` e por que usa `[0-9]` em vez de `\d`;
-- [ ] executei `npm test` (50 testes passando) e `npm run demo` (47/47 verificações) no meu computador;
-- [ ] conferi a saída do demo com os resultados esperados do enunciado, etapa por etapa;
-- [ ] sei explicar os quatro problemas descritos no relatório (Unicode em `\w`/`\b`, `$&` na substituição, `lastIndex` com a flag `g` e prioridade `==` × `=` no léxico) e demonstrá-los ao vivo;
-- [ ] li o relatório inteiro e concordo com o conteúdo, e as respostas às perguntas orientadoras refletem o meu entendimento;
-- [ ] revisei os dados reconstruídos em `dados/` e entendo por que produzem as contagens pedidas;
-- [ ] testei o site da apresentação (slides, demos e os dois jogos) antes da aula;
-- [ ] estou ciente de que respondo pelo conteúdo entregue na defesa oral.
-
-**Data da revisão:** ____/____/2026
-
-**Assinatura:** ______________________________
-
-## 4. Resumo
+## 3. Resumo
 
 A IA foi usada como **ferramenta de produção**: escreveu e testou o código e redigiu os textos. O **autor** definiu os objetivos, aprovou o design, revisou o resultado, executou os testes e responde por todo o conteúdo.

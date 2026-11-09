@@ -8,7 +8,7 @@ Trabalho prático **Regex Multilinguagem** · Linguagens Formais e Autômatos ·
 | **Ambiente** | Node.js **≥ 20** (desenvolvido e testado no **Node.js 24.21**) |
 | **API de regex** | `RegExp` nativa; `test`, `exec`, `String.prototype.match`, `matchAll`, `replace`, `replaceAll`, `split` |
 | **Dependências** | **Nenhuma.** Somente `RegExp` e módulos internos `node:` (`node:fs`, `node:test`, `node:assert`, `node:util`) |
-| **Integrantes** | Thiago Corobinski Carmona · _(demais integrantes)_ |
+| **Integrante** | Thiago Corobinski Carmona |
 | **Site da apresentação** | https://regex-js.tccodes.com.br |
 | **Repositório** | https://github.com/ThiagoCCarmona/regex-js |
 

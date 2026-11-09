@@ -62,3 +62,9 @@ test('borda: CRLF do Windows e linhas em branco no fim não alteram o resultado'
   assert.equal(r.rejeitadas.length, 1);
   assert.deepEqual(r.porNivel, { INFO: 3, WARN: 1, ERROR: 1 });
 });
+
+test('borda: arquivo salvo com BOM UTF-8 (Bloco de Notas) não perde a primeira linha', () => {
+  const r = analisarLogs('﻿' + carregarLog('logs.txt'));
+  assert.equal(r.validas.length, 5);
+  assert.equal(r.rejeitadas.length, 1);
+});

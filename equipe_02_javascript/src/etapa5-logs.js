@@ -48,7 +48,8 @@ function contar(mapa, chave) {
 export function analisarLogs(texto, { semantica = true } = {}) {
   const resultado = { validas: [], rejeitadas: [], porNivel: {}, porUsuario: {}, porAcao: {} };
 
-  texto.split(RE_QUEBRA_LINHA).forEach((conteudo, i) => {
+  // O Bloco de Notas do Windows pode gravar um BOM (U+FEFF) no início do arquivo.
+  texto.replace(/^﻿/, '').split(RE_QUEBRA_LINHA).forEach((conteudo, i) => {
     const linha = i + 1;
     if (conteudo.trim() === '') return;
 

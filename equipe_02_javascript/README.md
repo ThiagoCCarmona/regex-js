@@ -26,10 +26,10 @@ npm run demo            # ou: node src/demo.js
 node src/demo.js 5
 
 # Testes automatizados (node:test)
-npm test                # ou: node --test "testes/*.test.js"
+npm test                # ou: node --test
 ```
 
-Saída esperada do demo: `47/47 verificações ok`. Saída esperada dos testes: `pass 49`, `fail 0`.
+Saída esperada do demo: `47/47 verificações ok`. Saída esperada dos testes: `pass 50`, `fail 0`.
 
 ## Estrutura
 
@@ -79,13 +79,14 @@ equipe_02_javascript/
 
 ## Testes
 
-São 49 testes em `testes/`, com casos positivos, negativos e de borda, incluindo:
+São 50 testes em `testes/`, com casos positivos, negativos e de borda, incluindo:
 
 - cadeia vazia (λ);
 - espaços nas pontas;
 - reuso de regex (`lastIndex`);
 - anos bissextos;
-- arquivos de log com quebras de linha do Windows (`\r\n`);
+- arquivos de log com quebras de linha do Windows (`
+`) ou gravados com BOM UTF-8;
 - prioridade de operadores (`==` × `=`);
 - `!` isolado.
 

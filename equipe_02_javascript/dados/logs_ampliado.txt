@@ -1,0 +1,9 @@
+01/09/2026 08:15:02 INFO ana 192.168.0.10 login
+01/09/2026 08:17:45 INFO bruno 192.168.0.11 upload_arquivo
+01/09/2026 09:02:10 WARN ana 192.168.0.10 senha_expirando
+01/09/2026 09:30:00 ERROR carla 10.0.0.5 falha_conexao
+01/09/2026 10:00:00 INFO bruno 192.168.0.11 logout
+linha corrompida sem o formato esperado
+02/09/2026 11:11:11 INFO carla 192.168.0.12 login
+02/09/2026 12:00:00 WARN ana 192.168.0.10 download
+03/09/2026 13:00 DEBUG dave 192.168.0.1 teste

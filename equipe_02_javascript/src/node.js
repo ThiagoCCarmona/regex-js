@@ -16,3 +16,8 @@ export function lerDado(nomeArquivo) {
 export function carregarTextoBase() {
   return lerDado('texto_base.txt');
 }
+
+/** Arquivo de log da Etapa 5 (logs.txt, logs_ampliado.txt, logs_semantica.txt). */
+export function carregarLog(nomeArquivo = 'logs.txt') {
+  return lerDado(nomeArquivo);
+}

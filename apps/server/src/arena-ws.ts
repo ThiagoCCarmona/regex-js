@@ -7,6 +7,8 @@
  *   host:iniciar-rodada {desafioId?}   começa a próxima rodada
  *   host:encerrar-rodada               termina a rodada antes do tempo
  *   host:remover {apelido}             tira (e bane) um jogador da sala
+ *   host:configurar {rodadas}          número de rodadas da partida (antes de começar)
+ *   host:nova-partida                  zera pontos e rodadas (jogadores continuam)
  *   jogador:entrar {pin, apelido, id?} entra (ou reconecta com o id salvo)
  *   jogador:enviar {padrao, flags}     envia uma regex para avaliação
  *
@@ -37,6 +39,7 @@ export type CodigoErro =
   | 'RODADA_EM_ANDAMENTO'
   | 'MENSAGEM_INVALIDA'
   | 'REMOVIDO'
+  | 'PARTIDA_ENCERRADA'
   | 'INTERNO';
 
 interface SalaAoVivo {
@@ -54,7 +57,8 @@ interface Contexto {
   jogadorId: string | null;
 }
 
-const desafioPublico = ({ solucao: _s, ...resto }: Desafio) => resto;
+/** O que o celular pode ver do desafio: sem solução e sem os casos ocultos. */
+const desafioPublico = ({ solucao: _s, deveOculto: _d, naoDeveOculto: _n, ...resto }: Desafio) => resto;
 
 export function registrarArena(app: FastifyInstance, limites: Limites = {}): void {
   const gerenciador = new GerenciadorSalas(limites);
@@ -76,6 +80,8 @@ export function registrarArena(app: FastifyInstance, limites: Limites = {}): voi
       agora: Date.now(),
       totalJogadores: v.sala.jogadores.size,
       totalDesafios: DESAFIOS.length,
+      totalRodadas: v.sala.totalRodadas,
+      partidaEncerrada: v.sala.partidaEncerrada(),
       ranking,
       rodada: r
         ? {
@@ -115,13 +121,31 @@ export function registrarArena(app: FastifyInstance, limites: Limites = {}): voi
     const r = v.sala.rodada;
     if (!r || r.encerrada) return;
     v.sala.encerrarRodada();
-    const msg = { t: 'rodada:fim', numero: r.numero, solucao: r.desafio.solucao, desafio: desafioPublico(r.desafio), ranking: v.sala.ranking() };
+    const msg = {
+      t: 'rodada:fim',
+      numero: r.numero,
+      totalRodadas: v.sala.totalRodadas,
+      ultima: v.sala.ehUltimaRodada(),
+      solucao: r.desafio.solucao,
+      desafio: desafioPublico(r.desafio),
+      ocultos: { deve: r.desafio.deveOculto, naoDeve: r.desafio.naoDeveOculto },
+      ranking: v.sala.ranking(),
+    };
     for (const ws of todos(v)) enviar(ws, msg);
   }
 
   function msgInicio(v: SalaAoVivo) {
     const r = v.sala.rodada!;
-    return { t: 'rodada:inicio', numero: r.numero, desafio: desafioPublico(r.desafio), fimEm: r.fimEm, duracaoMs: DURACAO_RODADA_MS, agora: Date.now() };
+    return {
+      t: 'rodada:inicio',
+      numero: r.numero,
+      totalRodadas: v.sala.totalRodadas,
+      desafio: desafioPublico(r.desafio),
+      ocultosQtd: r.desafio.deveOculto.length + r.desafio.naoDeveOculto.length,
+      fimEm: r.fimEm,
+      duracaoMs: DURACAO_RODADA_MS,
+      agora: Date.now(),
+    };
   }
 
   /** A sala que este socket controla como telão, ou undefined. */
@@ -163,6 +187,9 @@ export function registrarArena(app: FastifyInstance, limites: Limites = {}): voi
         const v = salaDoHost(ws, ctx);
         if (!v) return erro(ws, 'NAO_AUTORIZADO', 'Apenas o telão controla as rodadas');
         if (v.sala.rodadaAtiva(Date.now())) return erro(ws, 'RODADA_EM_ANDAMENTO', 'Já existe uma rodada em andamento');
+        if (v.sala.rodada && v.sala.rodada.numero >= v.sala.totalRodadas) {
+          return erro(ws, 'PARTIDA_ENCERRADA', 'A partida terminou. Comece uma nova partida.');
+        }
         if (v.timerFim) clearTimeout(v.timerFim); // timer antigo não pode encerrar a rodada nova
         v.sala.iniciarRodada(Date.now(), typeof msg.desafioId === 'string' ? msg.desafioId : undefined);
         const inicio = msgInicio(v);
@@ -180,6 +207,25 @@ export function registrarArena(app: FastifyInstance, limites: Limites = {}): voi
         const v = salaDoHost(ws, ctx);
         if (!v) return erro(ws, 'NAO_AUTORIZADO', 'Apenas o telão controla as rodadas');
         encerrarRodada(v);
+        avisarHost(v);
+        return;
+      }
+      case 'host:configurar': {
+        const v = salaDoHost(ws, ctx);
+        if (!v) return erro(ws, 'NAO_AUTORIZADO', 'Apenas o telão configura a partida');
+        if (!v.sala.configurarRodadas(Number(msg.rodadas))) {
+          return erro(ws, 'RODADA_EM_ANDAMENTO', 'Só dá para mudar o número de rodadas antes de a partida começar (1 a 20)');
+        }
+        avisarHost(v);
+        return;
+      }
+      case 'host:nova-partida': {
+        const v = salaDoHost(ws, ctx);
+        if (!v) return erro(ws, 'NAO_AUTORIZADO', 'Apenas o telão controla a partida');
+        if (v.timerFim) clearTimeout(v.timerFim);
+        v.timerFim = null;
+        v.sala.novaPartida();
+        for (const alvo of v.jogadores.values()) enviar(alvo, { t: 'partida:nova' });
         avisarHost(v);
         return;
       }
@@ -221,9 +267,21 @@ export function registrarArena(app: FastifyInstance, limites: Limites = {}): voi
         const enviadoEm = Date.now();
         const bloqueio = v.sala.tentarEnvio(jogadorId, enviadoEm);
         if (bloqueio) return erro(ws, 'ENVIO_RECUSADO', bloqueio);
-        const { deveCasar, naoDeveCasar } = v.sala.rodada!.desafio;
-        const avaliacao = await avaliarRegex(padrao, flags, deveCasar, naoDeveCasar);
-        const correto = avaliacao.ok && avaliacao.correto;
+        const { deveCasar, naoDeveCasar, deveOculto, naoDeveOculto } = v.sala.rodada!.desafio;
+        // Avalia visíveis + ocultos de uma vez; ao celular só voltam os visíveis
+        // e a QUANTIDADE de ocultos que falharam.
+        const bruta = await avaliarRegex(padrao, flags, [...deveCasar, ...deveOculto], [...naoDeveCasar, ...naoDeveOculto]);
+        const correto = bruta.ok && bruta.correto;
+        const avaliacao = bruta.ok
+          ? {
+              ok: true as const,
+              acertosDeve: bruta.acertosDeve.slice(0, deveCasar.length),
+              acertosNaoDeve: bruta.acertosNaoDeve.slice(0, naoDeveCasar.length),
+              ocultosFalhos:
+                bruta.acertosDeve.slice(deveCasar.length).filter((x) => !x).length +
+                bruta.acertosNaoDeve.slice(naoDeveCasar.length).filter(Boolean).length,
+            }
+          : bruta;
         // Sempre registra (libera o jogador para o próximo envio), mesmo em erro.
         const pontos = v.sala.registrarResultado(jogadorId, correto, padrao.length, enviadoEm);
         const total = v.sala.jogadores.get(jogadorId)?.pontos ?? 0;

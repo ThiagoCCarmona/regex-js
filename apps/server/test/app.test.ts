@@ -202,3 +202,47 @@ test('só o telão pode remover jogadores', async () => {
   const erro = await jog.esperar('erro');
   assert.equal(erro.codigo, 'NAO_AUTORIZADO');
 });
+
+test('casos ocultos: não vão para o celular, contam na avaliação e são revelados no fim', async () => {
+  const host = cliente(await app.injectWS('/ws'));
+  host.enviar({ t: 'host:criar' });
+  const { pin } = await host.esperar('sala:criada');
+  const jog = cliente(await app.injectWS('/ws'));
+  jog.enviar({ t: 'jogador:entrar', pin, apelido: 'Decorador' });
+  await jog.esperar('jogador:entrou');
+  host.enviar({ t: 'host:iniciar-rodada', desafioId: 'horario' });
+  const inicio = await jog.esperar('rodada:inicio');
+  assert.equal(inicio.desafio.deveOculto, undefined);
+  assert.equal(inicio.desafio.naoDeveOculto, undefined);
+  // Decorar as palavras visíveis passa nos exemplos mas falha nos ocultos
+  jog.enviar({ t: 'jogador:enviar', padrao: '^(08:30|23:59|00:00|19:05)$', flags: '' });
+  const r = await jog.esperar('resultado');
+  assert.equal(r.correto, false);
+  assert.ok(r.ocultosFalhos > 0);
+  assert.ok(r.acertosDeve.every(Boolean));
+  host.enviar({ t: 'host:encerrar-rodada' });
+  const fim = await jog.esperar('rodada:fim');
+  assert.ok(fim.ocultos.deve.length + fim.ocultos.naoDeve.length > 0);
+  assert.equal(fim.totalRodadas, 5);
+  assert.equal(fim.ultima, false);
+});
+
+test('host configura rodadas; após a última, rodada:fim vem com ultima=true; nova partida avisa os celulares', async () => {
+  const host = cliente(await app.injectWS('/ws'));
+  host.enviar({ t: 'host:criar' });
+  const { pin } = await host.esperar('sala:criada');
+  const jog = cliente(await app.injectWS('/ws'));
+  jog.enviar({ t: 'jogador:entrar', pin, apelido: 'Uma' });
+  await jog.esperar('jogador:entrou');
+  host.enviar({ t: 'host:configurar', rodadas: 1 });
+  host.enviar({ t: 'host:iniciar-rodada' });
+  await jog.esperar('rodada:inicio');
+  host.enviar({ t: 'host:encerrar-rodada' });
+  const fim = await jog.esperar('rodada:fim');
+  assert.equal(fim.ultima, true);
+  host.enviar({ t: 'host:iniciar-rodada' });
+  const erro = await host.esperar('erro');
+  assert.equal(erro.codigo, 'PARTIDA_ENCERRADA');
+  host.enviar({ t: 'host:nova-partida' });
+  await jog.esperar('partida:nova');
+});

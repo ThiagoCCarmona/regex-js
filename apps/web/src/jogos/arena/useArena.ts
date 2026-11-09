@@ -26,6 +26,8 @@ export interface EstadoSala {
   agora: number;
   totalJogadores: number;
   totalDesafios: number;
+  totalRodadas: number;
+  partidaEncerrada: boolean;
   ranking: LinhaRanking[];
   rodada: { numero: number; fimEm: number; ativa: boolean; acertos: number; desafio: DesafioPublico } | null;
 }
@@ -34,8 +36,9 @@ export type MensagemServidor =
   | { t: 'sala:criada'; pin: string; token: string }
   | ({ t: 'sala:estado' } & EstadoSala)
   | { t: 'jogador:entrou'; id: string; apelido: string; pin: string; pontos: number }
-  | { t: 'rodada:inicio'; numero: number; desafio: DesafioPublico; fimEm: number; duracaoMs: number; agora: number }
-  | { t: 'rodada:fim'; numero: number; solucao: string; desafio: DesafioPublico; ranking: LinhaRanking[] }
+  | { t: 'rodada:inicio'; numero: number; totalRodadas: number; desafio: DesafioPublico; ocultosQtd: number; fimEm: number; duracaoMs: number; agora: number }
+  | ({ t: 'rodada:fim' } & FimRodada)
+  | { t: 'partida:nova' }
   | {
       t: 'resultado';
       padrao: string;
@@ -43,11 +46,22 @@ export type MensagemServidor =
       erro?: string;
       acertosDeve?: boolean[];
       acertosNaoDeve?: boolean[];
+      ocultosFalhos?: number;
       correto: boolean;
       pontos: number;
       total: number;
     }
   | { t: 'erro'; codigo: string; msg: string };
+
+export interface FimRodada {
+  numero: number;
+  totalRodadas: number;
+  ultima: boolean;
+  solucao: string;
+  desafio: DesafioPublico;
+  ocultos: { deve: string[]; naoDeve: string[] };
+  ranking: LinhaRanking[];
+}
 
 export type Enviar = (msg: object) => void;
 

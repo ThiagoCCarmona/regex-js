@@ -4,6 +4,7 @@
  * este worker (que o processo principal encerra), e não o servidor.
  */
 import { parentPort } from 'node:worker_threads';
+import { traduzirErroRegex } from './erros-regex.ts';
 
 interface Pedido {
   id: number;
@@ -18,7 +19,7 @@ parentPort!.on('message', (p: Pedido) => {
   try {
     re = new RegExp(p.padrao, p.flags);
   } catch (e) {
-    parentPort!.postMessage({ id: p.id, ok: false, erro: `Regex inválida: ${(e as Error).message}` });
+    parentPort!.postMessage({ id: p.id, ok: false, erro: traduzirErroRegex((e as Error).message) });
     return;
   }
   const acertosDeve = p.deve.map((s) => re.test(s));

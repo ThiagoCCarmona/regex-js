@@ -139,3 +139,40 @@ test('telão remove um jogador pelo apelido; ele não volta com o mesmo apelido 
   assert.equal(sala.estaBanido(r.ok ? r.jogador.id : ''), true);
   assert.equal(sala.removerPorApelido('ninguem'), null);
 });
+
+test('partida tem número de rodadas configurável (padrão 5) e a última é sinalizada', () => {
+  const { sala } = salaComJogador();
+  assert.equal(sala.totalRodadas, 5);
+  sala.configurarRodadas(3);
+  assert.equal(sala.totalRodadas, 3);
+  sala.iniciarRodada(0);
+  assert.equal(sala.ehUltimaRodada(), false);
+  sala.encerrarRodada();
+  sala.iniciarRodada(70_000);
+  sala.encerrarRodada();
+  sala.iniciarRodada(140_000);
+  assert.equal(sala.ehUltimaRodada(), true);
+  sala.encerrarRodada();
+  assert.equal(sala.partidaEncerrada(), true);
+});
+
+test('não configura rodadas no meio da partida; valores fora de 1..20 são recusados', () => {
+  const { sala } = salaComJogador();
+  assert.equal(sala.configurarRodadas(0), false);
+  assert.equal(sala.configurarRodadas(21), false);
+  sala.iniciarRodada(0);
+  assert.equal(sala.configurarRodadas(8), false);
+});
+
+test('nova partida zera pontos e rodadas, mantendo os jogadores', () => {
+  const { sala, id } = salaComJogador();
+  sala.iniciarRodada(0);
+  sala.tentarEnvio(id, 100);
+  sala.registrarResultado(id, true, 5, 100);
+  sala.encerrarRodada();
+  sala.novaPartida();
+  assert.equal(sala.rodada, null);
+  assert.equal(sala.ranking()[0].pontos, 0);
+  assert.equal(sala.jogadores.size, 1);
+  assert.equal(sala.partidaEncerrada(), false);
+});

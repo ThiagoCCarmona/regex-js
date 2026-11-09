@@ -213,6 +213,7 @@ export const SLIDES: Slide[] = [
       'Leia o QR code, digite o PIN e escolha um apelido.',
       'Escreva uma regex que case as palavras verdes e nenhuma vermelha.',
       'Pontos por acertar, por rapidez e por regex curta.',
+      'Há casos ocultos, revelados no fim: decorar as palavras não basta, é preciso descrever a linguagem.',
     ],
     notas: 'Agora é com vocês. Abro o telão da Arena e jogamos uma ou duas rodadas.',
     demo: 'Arena',

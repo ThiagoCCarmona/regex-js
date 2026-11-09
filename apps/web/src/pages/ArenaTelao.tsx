@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Qr } from '../components/Qr.tsx';
-import { useArena, useTique, type EstadoSala, type LinhaRanking } from '../jogos/arena/useArena.ts';
+import { useArena, useTique, type EstadoSala, type FimRodada, type LinhaRanking } from '../jogos/arena/useArena.ts';
 import { SLIDES } from '../slides/conteudo.ts';
 
 /** Slide da Arena (para o botão de voltar). */
 const SLIDE_ARENA = SLIDES.findIndex((s) => s.id === 'arena') + 1;
-
 const CHAVE = 'arena:telao';
+const OPCOES_RODADAS = [3, 5, 8, 10];
 
 /**
  * PIN e token secreto da sala deste telão. Fica em localStorage (compartilhado
@@ -30,7 +30,13 @@ function salvarSala(s: { pin: string; token: string } | null) {
   }
 }
 
-function Ranking({ linhas, mostrarGanho, aoRemover }: { linhas: LinhaRanking[]; mostrarGanho?: boolean; aoRemover?: (apelido: string) => void }) {
+interface PropsRanking {
+  linhas: LinhaRanking[];
+  mostrarGanho?: boolean;
+  aoRemover?: (apelido: string) => void;
+}
+
+function Ranking({ linhas, mostrarGanho, aoRemover }: PropsRanking) {
   if (linhas.length === 0) return <p className="estado-conexao">Ninguém entrou ainda. Leia o QR code para jogar.</p>;
   return (
     <ol className="ranking">
@@ -52,10 +58,45 @@ function Ranking({ linhas, mostrarGanho, aoRemover }: { linhas: LinhaRanking[]; 
   );
 }
 
-/** Tela do apresentador: PIN, QR, desafio da rodada, cronômetro e ranking. */
+/** Pódio animado do fim da partida: 3º, 2º e 1º sobem em sequência. */
+function Podio({ ranking, aoNovaPartida }: { ranking: LinhaRanking[]; aoNovaPartida: () => void }) {
+  const [primeiro, segundo, terceiro] = ranking;
+  const degrau = (j: LinhaRanking | undefined, lugar: 1 | 2 | 3) => (
+    <div className={`degrau degrau-${lugar}`}>
+      <span className="podio-nome">{j?.apelido ?? '—'}</span>
+      <span className="podio-pontos">{j ? `${j.pontos} pts` : ''}</span>
+      <span className="podio-bloco">{lugar}º</span>
+    </div>
+  );
+  return (
+    <section className="podio" aria-label="Pódio final">
+      <h2>Fim de jogo!</h2>
+      <div className="podio-degraus">
+        {degrau(segundo, 2)}
+        {degrau(primeiro, 1)}
+        {degrau(terceiro, 3)}
+      </div>
+      {ranking.length > 3 && (
+        <ol className="podio-resto" start={4}>
+          {ranking.slice(3, 10).map((j) => (
+            <li key={j.apelido}>
+              {j.apelido} <b>{j.pontos}</b>
+            </li>
+          ))}
+        </ol>
+      )}
+      <button type="button" onClick={aoNovaPartida}>
+        Nova partida
+      </button>
+    </section>
+  );
+}
+
+/** Tela do apresentador: PIN, QR, desafio da rodada, cronômetro, ranking e pódio. */
 export function ArenaTelao() {
   const [estado, setEstado] = useState<EstadoSala | null>(null);
-  const [solucao, setSolucao] = useState<string | null>(null);
+  const [fim, setFim] = useState<FimRodada | null>(null);
+  const [podio, setPodio] = useState(false);
   const [aviso, setAviso] = useState('');
 
   const { conectado, enviar, restante } = useArena(
@@ -64,10 +105,15 @@ export function ArenaTelao() {
         salvarSala({ pin: m.pin, token: m.token });
       } else if (m.t === 'sala:estado') {
         setEstado(m);
+        if (!m.rodada) {
+          setFim(null);
+          setPodio(false);
+        }
       } else if (m.t === 'rodada:inicio') {
-        setSolucao(null);
+        setFim(null);
+        setAviso('');
       } else if (m.t === 'rodada:fim') {
-        setSolucao(m.solucao);
+        setFim(m);
       } else if (m.t === 'erro') {
         if (m.codigo === 'SALA_INEXISTENTE' || m.codigo === 'NAO_AUTORIZADO') {
           // A sala salva expirou ou pertence a outro telão: cria uma nova.
@@ -87,6 +133,23 @@ export function ArenaTelao() {
   useTique(ativa);
   const segundos = rodada ? Math.ceil(restante(rodada.fimEm) / 1000) : 0;
   const linkJogo = estado ? `${location.origin}/arena?pin=${estado.pin}` : '';
+  const partidaEncerrada = !!estado?.partidaEncerrada;
+  const remover = (apelido: string) => {
+    if (window.confirm(`Remover "${apelido}" da sala? O apelido não poderá ser usado de novo.`)) enviar({ t: 'host:remover', apelido });
+  };
+  const novaPartida = () => {
+    setPodio(false);
+    setFim(null);
+    enviar({ t: 'host:nova-partida' });
+  };
+
+  if (estado && podio) {
+    return (
+      <main className="telao telao-podio">
+        <Podio ranking={estado.ranking} aoNovaPartida={novaPartida} />
+      </main>
+    );
+  }
 
   return (
     <main className="telao">
@@ -106,13 +169,23 @@ export function ArenaTelao() {
             <p>
               {estado.totalJogadores} {estado.totalJogadores === 1 ? 'pessoa conectada' : 'pessoas conectadas'}.
             </p>
+            <label className="seletor-rodadas">
+              Rodadas da partida:{' '}
+              <select value={estado.totalRodadas} onChange={(e) => enviar({ t: 'host:configurar', rodadas: Number(e.target.value) })}>
+                {OPCOES_RODADAS.map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+            </label>
           </>
         )}
 
         {estado && rodada && (
           <>
             <p className="estado-conexao">
-              Rodada {rodada.numero} · etapa {rodada.desafio.etapa} · PIN {estado.pin}
+              Rodada {rodada.numero} de {estado.totalRodadas}, etapa {rodada.desafio.etapa}. PIN {estado.pin}
             </p>
             <h2 className="desafio-titulo">{rodada.desafio.titulo}</h2>
             <p>Deve casar com todas:</p>
@@ -129,14 +202,31 @@ export function ArenaTelao() {
             </ul>
             {ativa ? (
               <p>
-                <span className={`cronometro${segundos <= 10 ? ' acabando' : ''}`}>{segundos}s</span> ·{' '}
-                {rodada.acertos} de {estado.totalJogadores} já acertaram
+                <span className={`cronometro${segundos <= 10 ? ' acabando' : ''}`}>{segundos}s</span>{' '}
+                {rodada.acertos} de {estado.totalJogadores} já acertaram. Há casos ocultos: decorar as palavras não basta.
               </p>
             ) : (
-              solucao && (
-                <p className="solucao">
-                  Uma solução: <code>/{solucao}/</code>
-                </p>
+              fim && (
+                <div className="revelacao">
+                  <p className="solucao">
+                    Uma solução: <code>/{fim.solucao}/</code>
+                  </p>
+                  {fim.ocultos.deve.length + fim.ocultos.naoDeve.length > 0 && (
+                    <>
+                      <p>Casos ocultos revelados:</p>
+                      <ul className="lista-desafio deve oculto">
+                        {fim.ocultos.deve.map((s) => (
+                          <li key={s}>{s}</li>
+                        ))}
+                      </ul>
+                      <ul className="lista-desafio nao-deve oculto">
+                        {fim.ocultos.naoDeve.map((s) => (
+                          <li key={s}>{s}</li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                </div>
               )
             )}
           </>
@@ -148,12 +238,16 @@ export function ArenaTelao() {
               <button type="button" className="secundario" onClick={() => enviar({ t: 'host:encerrar-rodada' })}>
                 Encerrar rodada
               </button>
+            ) : partidaEncerrada ? (
+              <button type="button" onClick={() => setPodio(true)}>
+                Mostrar pódio
+              </button>
             ) : (
               <button type="button" onClick={() => enviar({ t: 'host:iniciar-rodada' })} disabled={estado.totalJogadores === 0}>
-                {rodada ? 'Próxima rodada' : 'Iniciar primeira rodada'}
+                {rodada ? `Próxima rodada (${rodada.numero + 1} de ${estado.totalRodadas})` : 'Iniciar primeira rodada'}
               </button>
             )}
-            <Link to={`/slide/${SLIDE_ARENA}`} className="botao-link" style={{ background: 'transparent', color: 'var(--tinta)', border: '2px solid var(--tinta)' }}>
+            <Link to={`/slide/${SLIDE_ARENA}`} className="botao-link botao-contorno">
               Voltar aos slides
             </Link>
           </div>
@@ -164,13 +258,7 @@ export function ArenaTelao() {
 
       <aside aria-label="Ranking">
         <h2>Ranking</h2>
-        <Ranking
-          linhas={estado?.ranking ?? []}
-          mostrarGanho={!!rodada && !ativa}
-          aoRemover={(apelido) => {
-            if (window.confirm(`Remover "${apelido}" da sala? O apelido não poderá ser usado de novo.`)) enviar({ t: 'host:remover', apelido });
-          }}
-        />
+        <Ranking linhas={estado?.ranking ?? []} mostrarGanho={!!rodada && !ativa} aoRemover={remover} />
       </aside>
     </main>
   );

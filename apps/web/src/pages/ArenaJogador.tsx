@@ -37,8 +37,8 @@ export function ArenaJogador() {
   const [pin, setPin] = useState(params.get('pin') ?? lerSessao()?.pin ?? '');
   const [apelido, setApelido] = useState(lerSessao()?.apelido ?? '');
   const [sessao, setSessao] = useState<Sessao | null>(null);
-  const [rodada, setRodada] = useState<{ numero: number; desafio: DesafioPublico; fimEm: number } | null>(null);
-  const [fim, setFim] = useState<{ solucao: string; posicao: number; total: number } | null>(null);
+  const [rodada, setRodada] = useState<{ numero: number; totalRodadas: number; desafio: DesafioPublico; fimEm: number; ocultosQtd: number } | null>(null);
+  const [fim, setFim] = useState<{ solucao: string; posicao: number; total: number; acertou: boolean; ganho: number; ultima: boolean; numero: number; totalRodadas: number } | null>(null);
   const [resultado, setResultado] = useState<Resultado | null>(null);
   const [pontos, setPontos] = useState(0);
   const [padrao, setPadrao] = useState('');
@@ -58,7 +58,8 @@ export function ArenaJogador() {
           break;
         }
         case 'rodada:inicio':
-          setRodada({ numero: m.numero, desafio: m.desafio, fimEm: m.fimEm });
+          setRodada({ numero: m.numero, totalRodadas: m.totalRodadas, desafio: m.desafio, fimEm: m.fimEm, ocultosQtd: m.ocultosQtd });
+          setAviso('');
           setFim(null);
           setResultado(null);
           setPadrao('');
@@ -67,13 +68,31 @@ export function ArenaJogador() {
         case 'rodada:fim': {
           setRodada(null);
           const s = lerSessao();
+          const eu = m.ranking.find((j) => j.apelido === s?.apelido);
           const posicao = m.ranking.findIndex((j) => j.apelido === s?.apelido) + 1;
-          setFim({ solucao: m.solucao, posicao, total: m.ranking.length });
+          setFim({
+            solucao: m.solucao,
+            posicao,
+            total: m.ranking.length,
+            acertou: !!eu?.acertou,
+            ganho: eu?.pontosRodada ?? 0,
+            ultima: m.ultima,
+            numero: m.numero,
+            totalRodadas: m.totalRodadas,
+          });
           break;
         }
+        case 'partida:nova':
+          setRodada(null);
+          setFim(null);
+          setResultado(null);
+          setPontos(0);
+          setAviso('');
+          break;
         case 'resultado':
           setResultado(m);
           setPontos(m.total);
+          // Erro de sintaxe já aparece no campo (verificado no navegador); aqui só os do servidor.
           if (!m.ok && m.erro) setAviso(m.erro);
           else setAviso('');
           break;
@@ -166,19 +185,29 @@ export function ArenaJogador() {
       )}
 
       {!rodada && fim && (
-        <div className="cartao">
-          <h2>{fim.posicao > 0 ? `Você está em ${fim.posicao}º de ${fim.total}` : 'Rodada encerrada'}</h2>
+        <div className={`cartao fim-rodada ${fim.acertou ? 'acertou' : 'esgotado'}`}>
+          {fim.ultima ? (
+            <h2>Fim de jogo! Você terminou em {fim.posicao}º de {fim.total}</h2>
+          ) : (
+            <h2>{fim.acertou ? `Você acertou! +${fim.ganho} pontos` : 'Tempo esgotado'}</h2>
+          )}
+          {fim.ultima && <p>{fim.acertou ? `Na última rodada você acertou: +${fim.ganho} pontos.` : 'Na última rodada o tempo esgotou.'}</p>}
           <p>
             Uma solução: <code>/{fim.solucao}/</code>
           </p>
-          <p>Aguarde a próxima rodada.</p>
+          {!fim.ultima && (
+            <p>
+              Você está em {fim.posicao}º de {fim.total}. Rodada {fim.numero} de {fim.totalRodadas}: aguarde a próxima.
+            </p>
+          )}
+          {fim.ultima && <p>Olhe para o telão: o pódio vai aparecer lá.</p>}
         </div>
       )}
 
       {rodada && (
         <div className="cartao">
           <p>
-            <span className={`cronometro${segundos <= 10 ? ' acabando' : ''}`}>{segundos}s</span> · rodada {rodada.numero}
+            <span className={`cronometro${segundos <= 10 ? ' acabando' : ''}`}>{segundos}s</span> rodada {rodada.numero} de {rodada.totalRodadas}
           </p>
           <h2>{rodada.desafio.titulo}</h2>
           <p className="legenda">Deve casar</p>
@@ -198,13 +227,19 @@ export function ArenaJogador() {
             ))}
           </ul>
 
+          {rodada.ocultosQtd > 0 && (
+            <p className="aviso-ocultos">
+              E mais {rodada.ocultosQtd} {rodada.ocultosQtd === 1 ? 'caso oculto' : 'casos ocultos'}, revelados no fim: descreva a linguagem, não decore as palavras.
+            </p>
+          )}
+
           {acertou ? (
             <p className="resultado-envio ok">Acertou! +{resultado!.pontos} pontos. Espere a rodada terminar.</p>
           ) : (
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                if (padrao) enviar({ t: 'jogador:enviar', padrao, flags: '' });
+                if (padrao && !erroRegex) enviar({ t: 'jogador:enviar', padrao, flags: '' });
               }}
             >
               <CampoRegex
@@ -213,11 +248,15 @@ export function ArenaJogador() {
                   setPadrao(v);
                   setResultado(null);
                 }} erro={erroRegex} rotulo={`Sua regex. Dica: ${rodada.desafio.dica}`} />
-              <button type="submit" style={{ marginTop: '0.6rem', width: '100%' }} disabled={!padrao || segundos === 0}>
+              <button type="submit" style={{ marginTop: '0.6rem', width: '100%' }} disabled={!padrao || !!erroRegex || segundos === 0}>
                 Enviar ({padrao.length} caracteres)
               </button>
               {resultado && !resultado.correto && resultado.ok && (
-                <p className="resultado-envio nao">Ainda não: confira as palavras marcadas com ✗.</p>
+                <p className="resultado-envio nao">
+                  {resultado.acertosDeve?.every(Boolean) && !resultado.acertosNaoDeve?.some(Boolean) && (resultado.ocultosFalhos ?? 0) > 0
+                    ? `Passou nos exemplos, mas falhou em ${resultado.ocultosFalhos} ${resultado.ocultosFalhos === 1 ? 'caso oculto' : 'casos ocultos'}. Generalize a linguagem!`
+                    : 'Ainda não: confira as palavras marcadas com ✗.'}
+                </p>
               )}
             </form>
           )}

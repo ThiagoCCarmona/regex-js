@@ -8,6 +8,8 @@ export const DURACAO_RODADA_MS = 60_000;
 export const INTERVALO_ENVIO_MS = 1_000;
 export const APELIDO_MAX = 16;
 export const MAX_SALAS = 200;
+export const RODADAS_PADRAO = 5;
+export const RODADAS_MAX = 20;
 export const MAX_JOGADORES = 150;
 const TOTAL_PINS = 9000; // 1000..9999
 
@@ -48,6 +50,7 @@ export class Sala {
   readonly pin: string;
   readonly jogadores = new Map<string, Jogador>();
   rodada: Rodada | null = null;
+  totalRodadas = RODADAS_PADRAO;
   private usados = new Set<string>();
   private readonly maxJogadores: number;
   /** Jogadores removidos pelo telão: ids e apelidos (normalizados) não voltam. */
@@ -125,6 +128,34 @@ export class Sala {
 
   encerrarRodada(): void {
     if (this.rodada) this.rodada.encerrada = true;
+  }
+
+  /** Define quantas rodadas a partida terá (só antes da primeira rodada). */
+  configurarRodadas(n: number): boolean {
+    if (this.rodada || !Number.isInteger(n) || n < 1 || n > RODADAS_MAX) return false;
+    this.totalRodadas = n;
+    return true;
+  }
+
+  ehUltimaRodada(): boolean {
+    return !!this.rodada && this.rodada.numero >= this.totalRodadas;
+  }
+
+  /** A última rodada da partida já terminou. */
+  partidaEncerrada(): boolean {
+    return this.ehUltimaRodada() && !!this.rodada?.encerrada;
+  }
+
+  /** Zera pontos e rodadas para uma nova partida, mantendo os jogadores. */
+  novaPartida(): void {
+    this.rodada = null;
+    this.usados.clear();
+    for (const j of this.jogadores.values()) {
+      j.pontos = 0;
+      j.pontosRodada = 0;
+      j.acertouRodada = false;
+      j.avaliando = false;
+    }
   }
 
   rodadaAtiva(agora: number): boolean {

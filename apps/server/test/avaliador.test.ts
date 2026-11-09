@@ -66,3 +66,11 @@ test('fila de avaliação é limitada: excesso recebe "servidor ocupado" na hora
   const ocupado = respostas.filter((r) => !r.ok && /ocupado/i.test(r.erro)).length;
   assert.ok(ocupado >= 4, `esperava >= 4 recusas, veio ${ocupado}`);
 });
+
+test('erro de sintaxe vem traduzido, numa mensagem só em português', async () => {
+  const r = await avaliarRegex('(abc', '', ['a'], []);
+  assert.equal(r.ok, false);
+  if (!r.ok) {
+    assert.equal(r.erro, 'Regex inválida: grupo aberto sem ")"');
+  }
+});

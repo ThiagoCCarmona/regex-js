@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Relatório técnico — Regex em JavaScript (Equipe 2)</title>
+<style>
+  @page { size: A4; margin: 18mm 18mm 18mm 18mm; }
+  * { box-sizing: border-box; }
+  body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-size: 10pt; line-height: 1.42; color: #1a2433; margin: 0; }
+  h1 { font-size: 18pt; color: #10204d; margin: 0 0 2pt; line-height: 1.15; }
+  h2 { font-size: 12.5pt; color: #10204d; margin: 13pt 0 4pt; border-bottom: 1.5pt solid #1d3f94; padding-bottom: 2pt; break-after: avoid; }
+  h3 { font-size: 10.5pt; color: #1d3f94; margin: 8pt 0 2pt; break-after: avoid; }
+  p { margin: 0 0 5pt; text-align: justify; hyphens: auto; }
+  ul, ol { margin: 0 0 5pt; padding-left: 16pt; }
+  li { margin-bottom: 2pt; }
+  code, .mono { font-family: Consolas, 'Cascadia Mono', monospace; font-size: 8.9pt; background: #eef2f6; padding: 0 2pt; border-radius: 2pt; font-variant-ligatures: none; }
+  pre { font-family: Consolas, monospace; font-size: 8.5pt; background: #f3f6f8; border-left: 3pt solid #1d3f94; padding: 4pt 7pt; margin: 3pt 0 6pt; white-space: pre-wrap; break-inside: avoid; }
+  table { border-collapse: collapse; width: 100%; margin: 3pt 0 7pt; font-size: 8.8pt; break-inside: avoid; }
+  th, td { border: 0.6pt solid #b9c6d3; padding: 2.5pt 5pt; text-align: left; vertical-align: top; }
+  th { background: #e4ebf3; color: #10204d; }
+  .cabecalho { border-bottom: 2.5pt solid #1d3f94; padding-bottom: 6pt; margin-bottom: 8pt; }
+  .meta { color: #4f5d70; font-size: 9.2pt; margin: 0; text-align: left; }
+  .ok { color: #1f8a5b; font-weight: 700; }
+  .marca { background: #ffe14d; padding: 0 2pt; }
+  .pergunta { font-weight: 700; color: #10204d; margin-top: 6pt; break-after: avoid; }
+  .nota { font-size: 8.8pt; color: #4f5d70; }
+</style>
+</head>
+<body>
+
+<div class="cabecalho">
+  <h1>Expressões regulares em JavaScript: relatório técnico</h1>
+  <p class="meta"><b>Equipe 2</b> · JavaScript / Node.js · Thiago Corobinski Carmona</p>
+  <p class="meta">Linguagens Formais e Autômatos · Prof. Luciano Cardoso · 2º semestre de 2026 · Trabalho prático “Regex Multilinguagem”</p>
+  <p class="meta">Código: github.com/ThiagoCCarmona/regex-js · Apresentação: regex-js.tccodes.com.br</p>
+</div>
+
+<h2>1. Objetivo e ambiente</h2>
+<p>Reproduzimos em JavaScript as seis atividades do laboratório de expressões regulares feito em Python: reconhecimento, validação, extração com grupos, substituição e divisão, parser de logs e analisador léxico. O código roda em <b>Node.js 24.21</b> (compatível com Node ≥ 20), usa somente a classe nativa <code>RegExp</code> e os métodos de <code>String</code> e <b>não tem dependências externas</b>. Os testes usam o executor nativo <code>node:test</code>.</p>
+<p>A entrega fica em <code>equipe_02_javascript/</code>, com um módulo por etapa em <code>src/</code>, testes em <code>testes/</code> e arquivos de entrada em <code>dados/</code>. O comando <code>npm test</code> executa <b>49 testes</b>, entre positivos, negativos e de borda. O comando <code>npm run demo</code> imprime, para cada caso do enunciado, a saída <b>obtida</b> ao lado da <b>esperada</b> (<span class="ok">47/47 verificações ok</span>).</p>
+<p><b>Dados reconstruídos.</b> O enunciado cita <code>dados/logs.txt</code> e o texto-base do laboratório Python, mas esses arquivos não estavam disponíveis para a equipe. Por isso os reconstruímos de modo que reproduzam exatamente os resultados esperados do enunciado: 6 linhas de log, 5 válidas e 1 inválida, com INFO=3, WARN=1 e ERROR=1, ana=2, bruno=2 e carla=1, e 5 ações distintas; o texto-base tem os 2 e-mails, as 2 datas e as 3 hashtags citados. O formato de log adotado é <code>DD/MM/AAAA HH:MM:SS NIVEL usuario IP acao</code>.</p>
+
+<h2>2. Resultados da matriz mínima de testes</h2>
+<table>
+  <tr><th>Módulo</th><th>Entrada</th><th>Critério do enunciado</th><th>Obtido</th></tr>
+  <tr><td>Reconhecimento</td><td>5 identificadores e a frase com números</td><td>Classificação exata e [2026, 32, 6]</td><td class="ok">total, _contador e nome_completo ✔; 2valor e x-y ✘; ['2026','32','6']</td></tr>
+  <tr><td>Validação</td><td>3 matrículas, 3 datas e 2 telefones</td><td>Aceitar somente os formatos especificados</td><td class="ok">CC-2026-001 ✔; SI-2026-001 e CC-26-001 ✘; 99/99/9999 com sintaxe ✔ e semântica ✘</td></tr>
+  <tr><td>Captura</td><td>2 e-mails, 2 datas e 3 hashtags</td><td>Valores e grupos corretos</td><td class="ok">datas com groups {dia, mes, ano}; 08:30 e 23:59 ✔; 25:61 ✘</td></tr>
+  <tr><td>Transformação</td><td>Espaços, máscara de CPF e divisão</td><td>Saídas idênticas ao enunciado</td><td class="ok">'LFA com Python é prática!'; '123.***.***-00'; [LFA, Python, Regex, Automatos]</td></tr>
+  <tr><td>Logs</td><td>Arquivo compartilhado (6 linhas)</td><td>5 válidas, 1 inválida e contagens corretas</td><td class="ok">5/1; ampliado 7/2; IP 300.1.1.1, 31/02 e 25:00 rejeitados na semântica</td></tr>
+  <tr><td>Tokens</td><td>Expressões do enunciado e o símbolo @</td><td>Tipos, lexemas, ordem e erro explícito</td><td class="ok">sequências idênticas; “Símbolo inesperado '@' na posição 6 (coluna 7)”</td></tr>
+</table>
+
+<h2>3. Respostas às perguntas orientadoras</h2>
+
+<p class="pergunta">3.1 Quais funções equivalem a reconhecimento completo, busca, extração global, substituição e split?</p>
+<table>
+  <tr><th>Operação</th><th>Python (<code>re</code>)</th><th>JavaScript</th></tr>
+  <tr><td>Reconhecimento completo</td><td><code>re.fullmatch(p, s)</code></td><td><code>/^p$/.test(s)</code>: não existe <i>fullmatch</i>; usamos âncoras</td></tr>
+  <tr><td>Busca (1ª ocorrência)</td><td><code>re.search(p, s)</code></td><td><code>/p/.exec(s)</code> ou <code>s.match(/p/)</code>, sem a flag <code>g</code></td></tr>
+  <tr><td>Extração global</td><td><code>re.findall</code> / <code>re.finditer</code></td><td><code>s.match(/p/g)</code> (só os textos) / <code>s.matchAll(/p/g)</code> (com grupos e índice)</td></tr>
+  <tr><td>Substituição</td><td><code>re.sub(p, r, s)</code></td><td><code>s.replace(/p/g, r)</code> ou <code>s.replaceAll(/p/g, r)</code></td></tr>
+  <tr><td>Divisão</td><td><code>re.split(p, s)</code></td><td><code>s.split(/p/)</code></td></tr>
+  <tr><td>Compilação</td><td><code>re.compile(p)</code></td><td>literal <code>/p/</code> (compilado na carga do módulo) ou <code>new RegExp(p)</code></td></tr>
+</table>
+
+<p class="pergunta">3.2 Quais diferenças de sintaxe e comportamento observamos em relação ao <code>re</code> do Python?</p>
+<ul>
+  <li><b>Grupos nomeados:</b> <code>(?&lt;nome&gt;…)</code> em JS e <code>(?P&lt;nome&gt;…)</code> em Python. A retro-referência é <code>\k&lt;nome&gt;</code> (Python: <code>(?P=nome)</code>) e, na substituição, <code>$&lt;nome&gt;</code> e <code>$1</code> (Python: <code>\g&lt;nome&gt;</code> e <code>\1</code>).</li>
+  <li><b>Classes abreviadas:</b> em JS, <code>\d</code>, <code>\w</code> e <code>\b</code> são sempre ASCII. Em Python 3, com padrões <i>str</i>, são Unicode por padrão (<code>\d</code> casa “٣”). Por isso usamos classes explícitas, como pede o enunciado.</li>
+  <li><b><code>$</code> e quebra de linha final:</b> em Python, <code>re.match(r'^\d+$', '123\n')</code> casa, porque <code>$</code> aceita um <code>\n</code> final. Em JS, <code>/^[0-9]+$/.test('123\n')</code> é <code>false</code>, então nossos validadores são estritos sem precisar de <code>\Z</code>, que não existe em JS.</li>
+  <li><b>Estado na regex:</b> com as flags <code>g</code> ou <code>y</code>, o objeto guarda <code>lastIndex</code> entre chamadas; não há equivalente em Python (seção 5).</li>
+  <li><b>Exigência da flag g:</b> <code>matchAll</code> e <code>replaceAll</code> lançam <code>TypeError</code> se a regex não tiver <code>g</code>; <code>replace</code> sem <code>g</code> troca só a primeira ocorrência (o <code>re.sub</code> troca todas).</li>
+  <li><b>Flags próprias:</b> <code>y</code> (sticky, usada no léxico), <code>d</code> (índices dos grupos), <code>u</code> e <code>v</code> (Unicode e <code>\p{…}</code>). Os modificadores embutidos do tipo <code>(?i:…)</code> só chegaram no ECMAScript 2025.</li>
+</ul>
+
+<p class="pergunta">3.3 Como o programa distingue formato sintaticamente válido de informação semanticamente válida?</p>
+<p>Em duas camadas. A regex responde se a cadeia tem a <b>forma</b> certa: <code>^(?&lt;dia&gt;[0-9]{2})\/(?&lt;mes&gt;[0-9]{2})\/(?&lt;ano&gt;[0-9]{4})$</code> aceita <code>99/99/9999</code>. Em seguida, os grupos são convertidos em números e conferidos por código comum (mês entre 1 e 12, dias por mês e ano bissexto). <code>validarData</code> devolve <code>{ sintatica, semantica, motivo }</code>, e por isso <code>99/99/9999</code> resulta em <code>{ true, false, 'mês 99 não existe' }</code>. O parser de logs faz o mesmo: <code>300.1.1.1</code> e <code>31/02/2026</code> passam pela regex e são rejeitados por <code>validarSemantica</code>, com o motivo. A regex poderia codificar algumas faixas, como fizemos nos horários (<code>[01][0-9]|2[0-3]</code>), mas regras como bissexto ficariam ilegíveis numa regex. Essa separação também mostra o limite do que uma linguagem regular expressa de forma prática.</p>
+
+<p class="pergunta">3.4 Qual é o papel dos grupos de captura e como são acessados?</p>
+<p>Os grupos delimitam partes do casamento para extraí-las ou reutilizá-las. Em JS, o resultado de <code>exec</code>/<code>matchAll</code> é um array: <code>m[0]</code> é o casamento inteiro, <code>m[1]…m[n]</code> são os grupos posicionais e <code>m.groups</code> é um objeto com os nomeados. A Etapa 3 decompõe a mesma data das duas formas (<code>decomporDataPosicional</code> usa <code>m[1]</code>; <code>decomporDataNomeada</code> usa <code>m.groups.dia</code>), e um teste garante que os resultados são iguais. Os nomes deixam o código autoexplicativo e resistem a mudanças: incluir um grupo novo não desloca os demais. Na Etapa 5, os seis campos do log saem direto de <code>{ ...m.groups }</code>.</p>
+
+<p class="pergunta">3.5 Como o tokenizador decide entre operadores com prefixos comuns (= e ==)?</p>
+<p>O tokenizador usa uma regex mestre, <code>(?&lt;NUMBER&gt;…)|(?&lt;ID&gt;…)|(?&lt;RELOP&gt;==|!=|&lt;=|&gt;=|&lt;|&gt;)|(?&lt;ASSIGN&gt;=)|…|(?&lt;MISMATCH&gt;[\s\S])</code>, com a flag <code>y</code>. O motor do JS testa as alternativas <b>da esquerda para a direita e fica com a primeira que casa</b>; não procura o casamento mais longo, como faria um analisador léxico gerado a partir de um AFD. Por isso a ordem é a regra de prioridade: <code>RELOP</code> vem antes de <code>ASSIGN</code>, e dentro de <code>RELOP</code> os operadores de dois caracteres vêm antes de <code>&lt;</code> e <code>&gt;</code>. A flag sticky obriga cada casamento a começar exatamente em <code>lastIndex</code>, de modo que nenhum caractere é pulado: o que não casa com nada cai em <code>MISMATCH</code> e vira erro com posição e coluna.</p>
+
+<p class="pergunta">3.6 Quais limitações do motor são relevantes para este laboratório?</p>
+<ul>
+  <li><b>Backtracking e ReDoS:</b> o V8 (Irregexp) usa backtracking. <code>/(a+)+$/</code> contra <code>"a…a!"</code> leva tempo exponencial: medimos 2, 12, 178 e 731 ms para 16, 20, 24 e 26 caracteres, e mais de 2 s para 28. Não há quantificadores possessivos nem grupos atômicos para conter isso, e <code>test()</code> não pode ser interrompido. Por isso, no site, toda regex digitada por usuários roda num <i>worker</i> com limite de tempo.</li>
+  <li><b>ASCII em <code>\w</code> e <code>\b</code>:</b> palavras acentuadas exigem <code>\p{L}</code> com a flag <code>u</code> e um <i>lookbehind</i> no lugar de <code>\b</code>.</li>
+  <li><b>Sem <code>fullmatch</code>, <code>\A</code> ou <code>\Z</code>:</b> o reconhecimento completo depende de <code>^…$</code> sem a flag <code>m</code>.</li>
+  <li><b><code>lastIndex</code> mutável:</b> compartilhar uma regex global entre chamadas causa resultados alternados.</li>
+</ul>
+
+<p class="pergunta">3.7 Em que sentido as ER de bibliotecas e as ER da Teoria da Computação são semelhantes e diferentes?</p>
+<p><b>Semelhanças:</b> as duas partem das mesmas operações: união (<code>|</code>), concatenação, fecho de Kleene (<code>*</code>) e a cadeia vazia λ, que na biblioteca aparece como o casamento vazio (por exemplo, <code>/a*/</code> casa com <code>''</code>). Restrita a essas operações, e às derivadas <code>+</code>, <code>?</code>, <code>{m,n}</code> e classes, uma regex de JS descreve uma linguagem regular, com AFD equivalente. É o caso de <code>/^(a|b)*abb$/</code>.</p>
+<p><b>Diferenças:</b> as bibliotecas acrescentam recursos que <b>saem da classe das linguagens regulares</b>. Com retro-referência, <code>/^(?&lt;p&gt;[ab]+)\k&lt;p&gt;$/</code> reconhece L = { ww : w ∈ {a,b}⁺ }, que não é regular (lema do bombeamento). <i>Lookahead</i>, <i>lookbehind</i>, âncoras e grupos de captura também não têm contrapartida na ER formal: uma ER define um conjunto de cadeias, enquanto a regex de biblioteca é um <b>procedimento de busca</b> que informa onde casou e o que capturou. Para sustentar esses recursos, o motor usa backtracking em vez de simular um AFD, e é daí que vem o risco de tempo exponencial. Motores como o RE2 do Go escolheram o caminho oposto: tempo linear garantido, sem retro-referências.</p>
+
+<h2>4. Problemas encontrados e como foram resolvidos</h2>
+<h3>4.1 “laboratórios” cortado em “laborat”</h3>
+<p>Portado literalmente do Python, o padrão de <code>palavrasComL</code> seria <code>/\b[Ll]\w*/g</code>, que em JS devolve <code>['LFA', 'laborat']</code>: o <code>\w</code> para no <code>ó</code>. Trocamos por <code>/(?&lt;![\p{L}\p{N}_])[Ll][\p{L}\p{N}_]*/gu</code>, com classes Unicode e a flag <code>u</code>. O <i>lookbehind</i> negativo substitui o <code>\b</code>, que também é ASCII. Um teste fixa o resultado em <code>['LFA', 'laboratórios']</code>.</p>
+<h3>4.2 Substituição “literal” que não era literal</h3>
+<p>No desafio da Etapa 4, <code>'preço: $5'.replaceAll('$5', '$&amp;$&amp;')</code> produziu <code>'preço: $5$5'</code>: mesmo com o padrão em string, o JS interpreta <code>$&amp;</code>, <code>$1</code> e <code>$$</code> na string de substituição. A solução foi passar uma <b>função</b> como substituta (<code>replaceAll(alvo, () =&gt; novo)</code>), cujo retorno é inserido sem interpretação. O caso ficou registrado em teste.</p>
+<h3>4.3 <code>test()</code> alternando <code>true</code> e <code>false</code></h3>
+<p>Ao reutilizar uma regex com a flag <code>g</code> em <code>test()</code>, chamadas seguidas com a mesma entrada retornavam <code>true</code>, <code>false</code>, <code>true</code>…, porque <code>lastIndex</code> avança após cada casamento. Corrigimos assim: validadores (<code>test</code>) usam regex <b>sem</b> <code>g</code>; a extração usa <code>match</code>/<code>matchAll</code>, que reiniciam o estado; e o tokenizador cria uma cópia (<code>new RegExp(RE_MESTRE)</code>) a cada chamada. Há um teste que chama <code>ehIdentificador</code> três vezes seguidas.</p>
+<h3>4.4 Prioridade de operadores e quebra de linha no léxico</h3>
+<p>Com <code>ASSIGN</code> antes de <code>RELOP</code>, <code>x==y</code> virava <code>ID ASSIGN ASSIGN ID</code>. Reordenar a especificação resolveu, e um teste fixa <code>x==y</code> como <code>ID RELOP ID</code>. Também trocamos <code>MISMATCH</code> de <code>.</code> para <code>[\s\S]</code>: o ponto não casa <code>\n</code>, e uma quebra de linha na entrada faria o laço com a flag sticky parar sem reportar erro.</p>
+
+<h2>5. Conclusão</h2>
+<p>As seis etapas reproduzem os resultados do laboratório Python com a <code>RegExp</code> nativa. As diferenças mais relevantes não estão na sintaxe básica, que é quase idêntica, mas no comportamento: a ausência de <code>fullmatch</code>, o <code>\w</code> só ASCII, o estado <code>lastIndex</code> e a interpretação de <code>$</code> na substituição. O trabalho também deixou concreta a distância entre a ER da teoria, um conjunto de cadeias com AFD equivalente, e a regex de biblioteca, um procedimento de busca mais expressivo e, por isso mesmo, sujeito a custo exponencial. As mesmas funções da entrega alimentam o site da apresentação, com demonstrações ao vivo e dois jogos.</p>
+<p class="nota"><b>Uso de IA generativa:</b> o código, os testes e este texto foram produzidos com apoio do Claude (Anthropic), via Claude Code, e revisados e testados pelo autor; detalhes em <code>uso_ia.md</code>. <b>Referências:</b> MDN Web Docs, “Regular expressions” (developer.mozilla.org/docs/Web/JavaScript/Guide/Regular_expressions); ECMAScript 2025 Language Specification, §22.2 RegExp Objects; documentação do módulo <code>re</code> do Python 3; HOPCROFT, MOTWANI e ULLMAN, <i>Introdução à Teoria de Autômatos, Linguagens e Computação</i>.</p>
+
+</body>
+</html>

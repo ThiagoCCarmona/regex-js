@@ -10,6 +10,7 @@ import { encerrarAvaliador } from '../src/avaliador.ts';
 
 let app: FastifyInstance;
 let dir: string;
+const abertos: WebSocket[] = [];
 
 before(async () => {
   dir = mkdtempSync(join(tmpdir(), 'regexjs-'));
@@ -19,6 +20,7 @@ before(async () => {
 });
 
 after(async () => {
+  for (const ws of abertos) ws.terminate();
   await app.close();
   await encerrarAvaliador();
   rmSync(dir, { recursive: true, force: true });
@@ -26,6 +28,7 @@ after(async () => {
 
 /** Coleta mensagens JSON do socket e permite esperar por um tipo. */
 function cliente(ws: WebSocket) {
+  abertos.push(ws);
   const recebidas: any[] = [];
   const esperando: Array<{ t: string; resolver: (m: any) => void }> = [];
   ws.on('message', (dados) => {

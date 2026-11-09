@@ -16,13 +16,27 @@ Trabalho prático **Regex Multilinguagem** da disciplina Linguagens Formais e Au
 
 ### O site
 
-- **Slides** (`/`): 14 slides para cerca de 10 minutos de apresentação. Cada etapa tem uma demonstração interativa que chama **as mesmas funções da entrega**. Atalhos: <kbd>←</kbd> <kbd>→</kbd> navegam, <kbd>F</kbd> põe em tela cheia, <kbd>N</kbd> mostra as notas de quem apresenta, <kbd>Esc</kbd> abre o menu.
+- **Slides** (`/`): 15 slides para cerca de 10 minutos de apresentação. Cada etapa tem uma demonstração interativa que chama **as mesmas funções da entrega**.
+  - Cada slide é desenhado num palco de 1280×640 e escalado para a tela: nada é cortado em projetores 1024×768, 1280×720 ou 1366×768.
+  - Atalhos: <kbd>←</kbd> <kbd>→</kbd> navegam, <kbd>F</kbd> põe em tela cheia, <kbd>N</kbd> mostra as notas de quem apresenta, <kbd>Esc</kbd> abre o menu.
 - **Playground** (`/playground`): regex livre, com casamentos marcados e tabela de grupos posicionais e nomeados.
-- **Regex Invaders** (`/invaders`): jogo solo. Palavras caem; uma regex derruba as inimigas (vermelhas) sem atingir as aliadas (verdes). São 6 fases, uma por tema do laboratório.
+  - Um selo diz se a regex é uma ER formal, se é regular mas fora da notação formal (lookaround, `\b`) ou se pode não ser regular (retro-referência).
+  - Para ER formais, o site desenha o **AFN da construção de Thompson** em SVG. O mesmo desenho aparece ao vivo no slide de teoria.
+- **Regex Invaders** (`/invaders`): jogo solo em 6 fases, uma por tema do laboratório. Palavras caem, e uma regex derruba os alvos sem atingir as aliadas.
+  - **Formas, não só cores:** os alvos são naves laranja e as aliadas são pílulas azuis com escudo. A paleta é segura para daltonismo e tem contraste ≥ 7:1.
+  - **Efeitos:**
+    - prévia com mira nos alvos e "⚠ aliada" antes do disparo;
+    - laser saindo do canhão, partículas e combo;
+    - zona de perigo perto do chão;
+    - som 8-bit opcional, desligado por padrão.
+  - Quem pede menos movimento (`prefers-reduced-motion`) joga sem tremor nem partículas.
 - **Regex Arena** (`/arena` no celular, `/arena/telao` no projetor): multiplayer ao vivo, no estilo quiz.
-  - A turma entra pelo QR code com o PIN da sala.
-  - A cada rodada aparecem palavras que devem e que não podem casar.
+  - A turma entra pelo QR code com o PIN da sala. O telão retoma a mesma sala mesmo se a aba for fechada ou recarregada.
+  - O telão escolhe o número de rodadas; após a última, aparece um **pódio** animado e o botão "Nova partida".
+  - A cada rodada aparecem palavras que devem e que não podem casar, além de **casos ocultos** revelados no fim. Decorar as palavras visíveis não pontua: é preciso descrever a linguagem.
   - Os pontos somam acerto, rapidez e regex curta, com ranking no telão.
+  - **Moderação:** um filtro barra apelidos impróprios, e o telão pode remover um jogador.
+  - **Carga testada:** 40 celulares simultâneos em produção, com avaliação p95 de 64 ms.
 
 ### Segurança contra ReDoS
 

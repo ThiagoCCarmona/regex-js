@@ -89,7 +89,8 @@ for (const [i, s] of SLIDES.entries()) {
   if (s.subtitulo) slide.addText(s.subtitulo, { x: 0.5, y: 1.15, w: W - 1, h: 0.5, fontFace: FONTE.texto, fontSize: 20, color: COR.suave });
 
   const temImagem = s.demo && existsSync(IMG(n)) && !['arena', 'fim'].includes(s.id);
-  const larguraTexto = temImagem ? 5.6 : W - 1;
+  // O slide da Arena tem o QR code à direita: o texto não pode passar por baixo dele.
+  const larguraTexto = temImagem ? 5.6 : s.id === 'arena' ? 7.3 : W - 1;
   let y = s.subtitulo ? 1.8 : 1.35;
 
   if (s.topicos.length) {

@@ -6,6 +6,7 @@ import { Qr } from '../../components/Qr.tsx';
 import { URL_PUBLICA, URL_REPOSITORIO } from '../../lib/config.ts';
 import { casamentosEmWorker, cronometrarEmWorker } from '../../lib/regex-segura.ts';
 import type { Marca } from '../../components/Fita.tsx';
+import { AutomatoThompson } from '../../components/AutomatoThompson.tsx';
 import { EQUIPE, SLIDES } from '../conteudo.ts';
 
 /* ---------------- Capa ---------------- */
@@ -193,46 +194,99 @@ export function LastIndex() {
 
 /* ---------------- Teoria ---------------- */
 export function Teoria() {
+  const [regex, setRegex] = useState('(a|b)*abb');
   const [cadeia, setCadeia] = useState('abab');
   const ww = /^(?<p>[ab]+)\k<p>$/;
   const abb = /^(a|b)*abb$/;
   const soAB = /^[ab]*$/.test(cadeia);
   return (
-    <div className="demo">
-      <label className="campo-demo">
-        <span>Cadeia sobre Σ = {'{a, b}'}</span>
-        <input value={cadeia} onChange={(e) => setCadeia(e.target.value)} className="mono grande" spellCheck={false} />
+    <div className="demo demo-teoria">
+      <label className="campo-demo largo">
+        <span>Regex: veja o AFN de Thompson (tente (a)\1 ou a(?=b))</span>
+        <input value={regex} onChange={(e) => setRegex(e.target.value)} className="mono" spellCheck={false} />
       </label>
-      {!soAB && <p className="erro-regex">Use só os símbolos a e b.</p>}
-      <table className="tabela">
-        <tbody>
-          <tr>
-            <td className="mono">/^(?&lt;p&gt;[ab]+)\k&lt;p&gt;$/</td>
-            <td>L = {'{ ww }'}, não regular</td>
-            <td>{ww.test(cadeia) ? <span className="selo ok">✓ aceita</span> : <span className="selo nao">✗ rejeita</span>}</td>
-          </tr>
-          <tr>
-            <td className="mono">/^(a|b)*abb$/</td>
-            <td>regular: termina em abb</td>
-            <td>{abb.test(cadeia) ? <span className="selo ok">✓ aceita</span> : <span className="selo nao">✗ rejeita</span>}</td>
-          </tr>
-        </tbody>
-      </table>
-      <p className="legenda">Cadeia vazia (λ): {cadeia === '' ? 'é a que está no campo agora' : 'apague o campo para testar'}</p>
+      <AutomatoThompson padrao={regex} alturaMax={210} />
+      <div className="teoria-cadeia">
+        <label className="campo-demo">
+          <span>Cadeia sobre Σ = {'{a, b}'}</span>
+          <input value={cadeia} onChange={(e) => setCadeia(e.target.value)} className="mono" spellCheck={false} />
+        </label>
+        <table className="tabela">
+          <tbody>
+            <tr>
+              <td className="mono">^(a|b)*abb$</td>
+              <td>regular</td>
+              <td>{abb.test(cadeia) ? <span className="selo ok">✓ aceita</span> : <span className="selo nao">✗ rejeita</span>}</td>
+            </tr>
+            <tr>
+              <td className="mono">^(?&lt;p&gt;[ab]+)\k&lt;p&gt;$</td>
+              <td>{'{ ww }'}: não regular</td>
+              <td>{ww.test(cadeia) ? <span className="selo ok">✓ aceita</span> : <span className="selo nao">✗ rejeita</span>}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      {!soAB && <p className="erro-regex">Use só os símbolos a e b na cadeia.</p>}
     </div>
   );
 }
 
 /* ---------------- ReDoS ---------------- */
+const LIMITE_MS = 2000;
+
+/** Curva do tempo de /(a+)+$/.test('a…a!') em função de n: o crescimento exponencial à vista. */
+function GraficoReDoS({ medidas }: { medidas: Array<{ n: number; ms: number | null }> }) {
+  const L = 620;
+  const A = 250;
+  const m = { esq: 62, dir: 16, topo: 18, base: 40 };
+  const nMin = 16;
+  const nMax = 34;
+  const yMax = Math.max(500, ...medidas.map((d) => d.ms ?? LIMITE_MS));
+  const x = (n: number) => m.esq + ((n - nMin) / (nMax - nMin)) * (L - m.esq - m.dir);
+  const y = (ms: number) => A - m.base - (Math.min(ms, yMax) / yMax) * (A - m.topo - m.base);
+  const pontos = medidas.map((d) => ({ ...d, px: x(d.n), py: y(d.ms ?? LIMITE_MS) }));
+  const marcasY = [0, yMax / 4, yMax / 2, (3 * yMax) / 4, yMax];
+  return (
+    <svg className="grafico-curva" viewBox={`0 0 ${L} ${A}`} role="img" aria-label="Tempo de execução em função de n">
+      {marcasY.map((v) => (
+        <g key={v}>
+          <line x1={m.esq} x2={L - m.dir} y1={y(v)} y2={y(v)} className="curva-grade" />
+          <text x={m.esq - 8} y={y(v) + 4} textAnchor="end" className="curva-eixo">
+            {Math.round(v)} ms
+          </text>
+        </g>
+      ))}
+      {Array.from({ length: (nMax - nMin) / 2 + 1 }, (_, k) => nMin + k * 2).map((n) => (
+        <text key={n} x={x(n)} y={A - m.base + 18} textAnchor="middle" className="curva-eixo">
+          {n}
+        </text>
+      ))}
+      <text x={(L + m.esq) / 2} y={A - 4} textAnchor="middle" className="curva-titulo-eixo">
+        n = quantidade de "a" antes do "!"
+      </text>
+      {pontos.length > 1 && <polyline points={pontos.map((p) => `${p.px},${p.py}`).join(' ')} className="curva-linha" />}
+      {pontos.map((p) => (
+        <g key={p.n}>
+          <circle cx={p.px} cy={p.py} r={p.ms === null ? 7 : 5} className={p.ms === null ? 'curva-ponto curva-estouro' : 'curva-ponto'} />
+          <text x={p.px} y={p.py - 11} textAnchor="middle" className="curva-valor">
+            {p.ms === null ? 'interrompido' : p.ms < 10 ? p.ms.toFixed(1) : Math.round(p.ms)}
+          </text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
 export function ReDoS() {
   const [medidas, setMedidas] = useState<Array<{ n: number; ms: number | null }>>([]);
   const [rodando, setRodando] = useState(false);
+  const iniciou = useRef(false);
 
   async function rodar() {
     setRodando(true);
     setMedidas([]);
     for (let n = 16; n <= 34; n += 2) {
-      const r = await cronometrarEmWorker('(a+)+$', '', 'a'.repeat(n) + '!', 2000);
+      const r = await cronometrarEmWorker('(a+)+$', '', 'a'.repeat(n) + '!', LIMITE_MS);
       const ms = 'ms' in r ? r.ms : null;
       setMedidas((m) => [...m, { n, ms }]);
       if (ms === null) break;
@@ -240,24 +294,22 @@ export function ReDoS() {
     setRodando(false);
   }
 
-  const max = Math.max(1, ...medidas.map((m) => m.ms ?? 2000));
+  // Roda sozinho ao abrir o slide: a curva vai aparecendo ponto a ponto.
+  useEffect(() => {
+    if (iniciou.current) return;
+    iniciou.current = true;
+    void rodar();
+  }, []);
+
   return (
     <div className="demo">
+      <GraficoReDoS medidas={medidas} />
       <div className="exemplos-linha">
-        <button type="button" onClick={rodar} disabled={rodando}>
-          {rodando ? 'Medindo…' : "Medir /(a+)+$/.test('aaa…a!')"}
+        <button type="button" className="secundario" onClick={rodar} disabled={rodando}>
+          {rodando ? 'Medindo…' : 'Medir de novo'}
         </button>
+        <span className="legenda">Cada ponto acrescenta dois "a": o tempo cresce cerca de 4× a cada passo.</span>
       </div>
-      <div className="grafico-redos" aria-live="polite">
-        {medidas.map((m) => (
-          <div key={m.n} className="barra-linha">
-            <span className="mono">n={m.n}</span>
-            <span className={`barra${m.ms === null ? ' estourou' : ''}`} style={{ width: `${((m.ms ?? 2000) / max) * 100}%` }} />
-            <b>{m.ms === null ? 'interrompido após 2 s' : `${m.ms < 1 ? m.ms.toFixed(2) : Math.round(m.ms)} ms`}</b>
-          </div>
-        ))}
-      </div>
-      {medidas.length === 0 && <p className="legenda">Cada linha acrescenta dois "a" à cadeia.</p>}
     </div>
   );
 }

@@ -185,7 +185,7 @@ export const SLIDES: Slide[] = [
     topicos: [
       'Mesma base: união (|), concatenação, fecho de Kleene (*) e λ (cadeia vazia).',
       'Bibliotecas vão além: retro-referência \\k<p> reconhece "ww" — linguagem que não é regular.',
-      'Lookahead/lookbehind, âncoras e grupos não existem nas ER formais.',
+      'Lookahead/lookbehind e âncoras não existem na notação formal, mas sem retro-referência a linguagem continua regular.',
       'O motor do JS faz backtracking em vez de simular um AFD.',
     ],
     codigo: "/^(?<p>[ab]+)\\k<p>$/.test('abab')   // true: L = { ww } não é regular\n/^(a|b)*abb$/                       // ER clássica: AFD equivalente",

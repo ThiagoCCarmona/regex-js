@@ -459,3 +459,28 @@ textarea,
   .nav .alternar-tema { padding: 0.1em 0.5em; font-size: 0.8rem; }
   .nav .tema-prefixo { display: none; }
 }
+
+/* ---------- AFN de Thompson ---------- */
+.afn { margin: 0; overflow-x: auto; }
+.afn svg { width: 100%; height: auto; display: block; }
+.afn-estado circle { fill: var(--papel-2); stroke: var(--tinta); stroke-width: 2.5; }
+.afn-inicial circle { fill: var(--azul-fundo); }
+.afn-final circle:first-of-type { fill: var(--marca); }
+.afn-final circle + circle { fill: none; }
+.afn-nome { font-family: var(--f-codigo); font-size: 12px; font-weight: 700; fill: var(--tinta-forte); }
+.afn-final .afn-nome { fill: #1a1a1a; }
+.afn-aresta { stroke: var(--tinta); stroke-width: 2; fill: none; }
+.afn-aresta.afn-eps { stroke: var(--texto-suave); stroke-dasharray: 5 4; }
+.afn-ponta { fill: var(--tinta); }
+.afn-rotulo { font-family: var(--f-codigo); font-size: 15px; font-weight: 700; fill: var(--tinta-forte); paint-order: stroke; stroke: var(--papel-2); stroke-width: 4px; }
+.afn-rotulo-eps { font-size: 12px; font-weight: 400; fill: var(--texto-suave); }
+.afn figcaption { color: var(--texto-suave); font-size: 0.9rem; margin-top: 0.4rem; }
+.afn-aviso { border-left: 5px solid var(--tinta); background: var(--papel-2); padding: 0.6rem 0.9rem; border-radius: 0 var(--raio) var(--raio) 0; max-width: 75ch; }
+.afn-aviso.afn-nao-regular { border-left-color: var(--vermelho); }
+.afn-aviso.afn-fora { border-left-color: #b8860b; }
+.selo-teoria { display: inline-flex; gap: 0.35rem; align-items: center; margin-top: 0.5rem; font-size: 0.9rem; font-weight: 700; padding: 0.15rem 0.6rem; border-radius: 999px; border: 2px solid currentColor; }
+.selo-teoria.formal { color: var(--verde); }
+.selo-teoria.nao-regular { color: var(--vermelho); }
+.selo-teoria.fora-da-notacao,
+.selo-teoria.grande { color: #b8860b; }
+.teoria-playground { margin-top: 2rem; }

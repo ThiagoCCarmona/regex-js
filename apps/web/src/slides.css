@@ -415,3 +415,18 @@ textarea.log { font-size: 0.82rem; white-space: pre; overflow-x: auto; }
 .com-palco .slide-capa .slide,
 .slide-capa .com-palco .slide { padding-bottom: 22px; }
 .tabela-datas caption { text-align: left; caption-side: top; color: var(--texto-suave); font-weight: 700; font-size: 0.9rem; padding-bottom: 0.35rem; }
+
+/* Curva do ReDoS */
+.grafico-curva { width: 100%; height: auto; display: block; }
+.curva-grade { stroke: var(--grade); stroke-width: 1; }
+.curva-eixo { font-family: var(--f-codigo); font-size: 12px; fill: var(--texto-suave); }
+.curva-titulo-eixo { font-size: 13px; fill: var(--texto-suave); }
+.curva-linha { fill: none; stroke: var(--vermelho); stroke-width: 3; }
+.curva-ponto { fill: var(--vermelho); }
+.curva-estouro { fill: var(--papel-2); stroke: var(--vermelho); stroke-width: 3; }
+.curva-valor { font-family: var(--f-codigo); font-size: 12px; font-weight: 700; fill: var(--tinta-forte); }
+
+/* Slide de teoria: AFN + teste de cadeias */
+.demo-teoria { display: grid; gap: 0.6rem; }
+.teoria-cadeia { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 0.8rem; align-items: end; }
+.teoria-cadeia .tabela { font-size: 0.9rem; }

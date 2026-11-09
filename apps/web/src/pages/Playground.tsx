@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { CampoRegex } from '../components/CampoRegex.tsx';
 import { Fita } from '../components/Fita.tsx';
 import { casamentosEmWorker, literalRegex, type Casamento } from '../lib/regex-segura.ts';
+import { classificar } from '../lib/thompson.ts';
+import { AutomatoThompson } from '../components/AutomatoThompson.tsx';
 
 const EXEMPLOS: Array<{ nome: string; padrao: string; flags: string; texto: string }> = [
   {
@@ -70,6 +72,8 @@ export function Playground() {
   const qtdGrupos = casamentos[0]?.grupos.length ?? 0;
   // RegExp.prototype.source escapa as barras: /a\/b/ e não /a/b/.
   const literal = literalRegex(padrao, flags);
+  const teoria = classificar(padrao);
+  const SELO = { formal: 'ER formal: regular', 'nao-regular': 'Pode não ser regular', 'fora-da-notacao': 'Regular, fora da notação formal', grande: 'ER formal (grande)', invalida: '' } as const;
 
   return (
     <main className="pagina">
@@ -99,6 +103,11 @@ export function Playground() {
       <div className="playground">
         <section>
           <CampoRegex padrao={padrao} flags={flags} aoMudarPadrao={setPadrao} aoMudarFlags={setFlags} erro={erro} autoFocus />
+          {teoria.tipo !== 'invalida' && (
+            <span className={`selo-teoria ${teoria.tipo}`} title={teoria.texto}>
+              {SELO[teoria.tipo]}
+            </span>
+          )}
           <label style={{ display: 'block', marginTop: '1rem' }}>
             <span className="rotulo" style={{ fontWeight: 700, color: 'var(--texto-suave)' }}>
               Texto
@@ -156,6 +165,15 @@ export function Playground() {
           )}
         </section>
       </div>
+
+      <section className="teoria-playground" aria-label="Ponte com a teoria">
+        <h2>Da regex ao autômato</h2>
+        <p>
+          Se a regex usa só união, concatenação, fecho e símbolos, ela é uma ER da teoria e tem um AFN equivalente. Este é o AFN da construção
+          de Thompson (as transições ε aparecem tracejadas).
+        </p>
+        <AutomatoThompson padrao={padrao} />
+      </section>
     </main>
   );
 }

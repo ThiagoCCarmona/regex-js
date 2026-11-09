@@ -65,11 +65,33 @@ let fabricaWorker: () => Worker = () => new Worker(new URL('./regex-worker.ts', 
 export function definirFabricaWorker(f: () => Worker): void {
   fabricaWorker = f;
   worker?.terminate();
-  worker = null;
+  worker = workerPronto = null;
 }
 
 let worker: Worker | null = null;
+/** Resolve true quando o worker avisa que carregou (false se não carregar a tempo). */
+let workerPronto: Promise<boolean> | null = null;
+const LIMITE_CARREGAMENTO_MS = 10_000;
 let proximoId = 1;
+
+function obterWorker(): { w: Worker; pronto: Promise<boolean> } {
+  if (!worker || !workerPronto) {
+    const w = fabricaWorker();
+    worker = w;
+    workerPronto = new Promise<boolean>((resolver) => {
+      const limite = setTimeout(() => resolver(false), LIMITE_CARREGAMENTO_MS);
+      const ouvir = (ev: MessageEvent<{ pronto?: boolean }>) => {
+        if (ev.data && ev.data.pronto) {
+          clearTimeout(limite);
+          w.removeEventListener('message', ouvir as EventListener);
+          resolver(true);
+        }
+      };
+      w.addEventListener('message', ouvir as EventListener);
+    });
+  }
+  return { w: worker, pronto: workerPronto };
+}
 
 interface Tarefa {
   pedido: PedidoRegex;
@@ -83,22 +105,31 @@ let ocupado = false;
  * Executa um pedido por vez. O cronômetro só começa quando o pedido chega ao
  * worker, então uma regex rápida na fila nunca "herda" o timeout de uma lenta.
  */
-function processar(): void {
+async function processar(): Promise<void> {
   if (ocupado || fila.length === 0) return;
   ocupado = true;
   const { pedido, timeoutMs, resolver } = fila.shift()!;
-  worker ??= fabricaWorker();
-  const w = worker;
+  const { w, pronto } = obterWorker();
+  // Espera o worker carregar ANTES de ligar o cronômetro: carregar o script
+  // numa rede ou máquina lenta não pode ser confundido com ReDoS.
+  if (!(await pronto)) {
+    w.terminate();
+    if (worker === w) worker = workerPronto = null;
+    ocupado = false;
+    resolver({ id: pedido.id, ok: false, erro: 'Não foi possível iniciar o avaliador de regex. Recarregue a página.' });
+    void processar();
+    return;
+  }
   const terminar = (r: RespostaRegex) => {
     clearTimeout(timer);
     w.removeEventListener('message', ouvir);
     ocupado = false;
     resolver(r);
-    processar();
+    void processar();
   };
   const timer = setTimeout(() => {
     w.terminate();
-    if (worker === w) worker = null;
+    if (worker === w) worker = workerPronto = null;
     terminar({ id: pedido.id, ok: false, erro: MSG_TEMPO_EXCEDIDO });
   }, timeoutMs);
   function ouvir(ev: MessageEvent<RespostaRegex>) {
@@ -111,7 +142,7 @@ function processar(): void {
 function executar(pedido: Omit<PedidoRegex, 'id'>, timeoutMs: number): Promise<RespostaRegex> {
   return new Promise((resolver) => {
     fila.push({ pedido: { ...pedido, id: proximoId++ }, timeoutMs, resolver });
-    processar();
+    void processar();
   });
 }
 

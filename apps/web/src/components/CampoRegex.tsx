@@ -36,6 +36,7 @@ export function CampoRegex({ padrao, flags = '', aoMudarPadrao, aoMudarFlags, er
               }
             }}
             aria-invalid={!!erro}
+            aria-label={rotulo}
           />
           <span className="barra" aria-hidden="true">/</span>
           {aoMudarFlags ? (

@@ -375,3 +375,43 @@ textarea.log { font-size: 0.82rem; white-space: pre; overflow-x: auto; }
 .rolagem-x { overflow-x: auto; }
 .tabela-comparacao td.mono { overflow-wrap: anywhere; }
 .slide-capa .slide { padding-bottom: 4.5rem; }
+
+/* ---------- Palco escalável (telas >= 900 px) ----------
+ * O slide é desenhado em 1280x640 px e escalado para caber entre o menu e a
+ * barra inferior: nada é cortado em projetores 1024x768, 1280x720, 1366x768...
+ * Dentro do palco as medidas são fixas (px), sem vw/vh. */
+.palco-area {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+}
+.palco-area.com-palco {
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.palco-moldura { flex: 1; }
+.com-palco .palco-moldura { flex: none; position: relative; }
+.com-palco .slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: top left;
+  padding: 26px 56px 22px;
+  gap: 22px;
+  overflow: hidden;
+}
+.com-palco .slide-cabecalho h2 { font-size: 46px; max-width: none; }
+.com-palco .slide-cabecalho .subtitulo { font-size: 22px; }
+.com-palco .topicos { font-size: 21px; line-height: 1.42; }
+.com-palco .codigo { font-size: 18px; line-height: 1.5; padding: 12px 16px; margin-top: 16px; }
+.com-palco .slide-corpo { gap: 32px; }
+.com-palco .slide-demo { padding: 20px; }
+.com-palco .titulo-capa .texto-marcado { font-size: 92px; }
+.com-palco .regex-capa { font-size: 24px; }
+.com-palco .capa .subtitulo { font-size: 23px; }
+.com-palco .tabela-comparacao { font-size: 17px; }
+.com-palco .slide-capa .slide,
+.slide-capa .com-palco .slide { padding-bottom: 22px; }
+.tabela-datas caption { text-align: left; caption-side: top; color: var(--texto-suave); font-weight: 700; font-size: 0.9rem; padding-bottom: 0.35rem; }

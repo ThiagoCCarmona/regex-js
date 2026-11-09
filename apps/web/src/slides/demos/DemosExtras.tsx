@@ -110,22 +110,31 @@ export function Api() {
 }
 
 /* ---------------- Comparação ---------------- */
-const COMPARACAO: Array<[string, string, string]> = [
+type Linha = [string, string, string];
+
+const COMPARACAO_API: Linha[] = [
   ['Reconhecimento completo', 're.fullmatch(p, s)', '/^p$/.test(s)'],
   ['Primeira ocorrência', 're.search(p, s)', '/p/.exec(s) ou s.match(/p/)'],
   ['Todas as ocorrências', 're.findall / re.finditer', 's.match(/p/g) / s.matchAll(/p/g)'],
   ['Substituição', 're.sub(p, r, s)', 's.replace(/p/g, r) / s.replaceAll'],
   ['Divisão', 're.split(p, s)', 's.split(/p/)'],
+  ['Compilar', 're.compile(p)', 'literal /p/ ou new RegExp(p)'],
+];
+
+const COMPARACAO_COMPORTAMENTO: Linha[] = [
   ['Grupo nomeado', '(?P<nome>…)', '(?<nome>…)'],
   ['Acessar grupo', "m.group('nome')", 'm.groups.nome'],
   ['Retro-referência', '(?P=nome)', '\\k<nome>'],
   ['Na substituição', '\\g<nome> ou \\1', '$<nome> ou $1'],
   ['\\d e \\w', 'Unicode por padrão', 'apenas ASCII'],
-  ['Compilar', 're.compile(p)', 'literal /p/ ou new RegExp(p)'],
+  ['$ antes de \\n final', "casa: '123\\n' passa", "não casa: '123\\n' falha"],
   ['Estado entre chamadas', 'não tem', 'lastIndex com flags g e y'],
 ];
 
-export function Comparacao() {
+export const ComparacaoApi = () => <TabelaComparacao linhas={COMPARACAO_API} />;
+export const ComparacaoComportamento = () => <TabelaComparacao linhas={COMPARACAO_COMPORTAMENTO} />;
+
+function TabelaComparacao({ linhas }: { linhas: Linha[] }) {
   return (
     <div className="demo rolagem-x">
       <table className="tabela tabela-comparacao">
@@ -137,7 +146,7 @@ export function Comparacao() {
           </tr>
         </thead>
         <tbody>
-          {COMPARACAO.map(([op, py, js]) => (
+          {linhas.map(([op, py, js]) => (
             <tr key={op}>
               <td>{op}</td>
               <td className="mono">{py}</td>
@@ -260,7 +269,7 @@ export function Arena() {
       <Qr url={`${URL_PUBLICA}/arena`} tamanho={260} legenda={`${URL_PUBLICA.replace(/^https?:\/\//, '')}/arena`} />
       <div>
         <p>Quem apresenta abre o telão, que mostra o PIN da sala.</p>
-        <Link to="/arena/telao" target="_blank" className="botao-link">
+        <Link to="/arena/telao" className="botao-link">
           Abrir telão da Arena
         </Link>
       </div>

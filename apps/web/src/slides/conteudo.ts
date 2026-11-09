@@ -45,7 +45,6 @@ export const SLIDES: Slide[] = [
       'Regex é um objeto RegExp: literal /padrão/flags ou new RegExp("padrão", "flags").',
       'O literal é compilado uma vez, quando o módulo carrega — o papel do re.compile.',
       'Flags: g (global), i, m, s, u (Unicode), y (sticky), d (índices) e v.',
-      'Não existe fullmatch: o reconhecimento completo usa as âncoras ^ e $.',
     ],
     codigo:
       "/^[A-Za-z_][A-Za-z0-9_]*$/.test('total')   // re.fullmatch\n/[0-9]+/.exec(texto)                         // re.search\n[...texto.matchAll(/[0-9]+/g)]               // re.finditer\ntexto.replace(/\\s+/g, ' ')                   // re.sub\ntexto.split(/\\s*[;,|]\\s*/)                  // re.split",
@@ -144,16 +143,27 @@ export const SLIDES: Slide[] = [
   },
   {
     id: 'comparacao',
-    titulo: 'JavaScript × Python re',
+    titulo: 'JavaScript × Python re: a API',
     topicos: [
-      'Grupos nomeados: (?<n>…) em JS, (?P<n>…) em Python.',
-      'Reconhecimento completo: ^…$ em JS, re.fullmatch em Python.',
-      '\\d e \\w: só ASCII em JS; Unicode por padrão no Python 3.',
-      'Regex com flag g guarda estado (lastIndex) — não existe isso em Python.',
+      'Em Python, funções do módulo re; em JS, métodos de RegExp e de String.',
+      'Reconhecimento completo: re.fullmatch em Python, ^…$ em JS.',
+      'O literal /…/ é compilado quando o módulo carrega, como re.compile.',
     ],
     notas:
-      'Esta tabela responde boa parte das perguntas do relatório. O ponto que mais confunde quem vem do Python é o lastIndex, que vou mostrar no próximo slide.',
-    demo: 'Comparacao',
+      'Esta tabela responde a primeira pergunta do relatório: quais funções equivalem a reconhecimento, busca, extração, substituição e split.',
+    demo: 'ComparacaoApi',
+  },
+  {
+    id: 'comparacao2',
+    titulo: 'JavaScript × Python re: o comportamento',
+    topicos: [
+      'Grupos nomeados: (?<n>…) em JS, (?P<n>…) em Python.',
+      '\\d e \\w: só ASCII em JS; Unicode por padrão no Python 3.',
+      'Regex com flag g guarda estado (lastIndex): isso não existe em Python.',
+    ],
+    notas:
+      'Aqui estão as diferenças que mais pegam quem vem do Python. A do lastIndex aparece no próximo slide; a do $ explica por que nossos validadores são estritos sem precisar de \\Z.',
+    demo: 'ComparacaoComportamento',
   },
   {
     id: 'problemas',

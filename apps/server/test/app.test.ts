@@ -159,3 +159,46 @@ test('envio fora de rodada devolve erro com código, sem derrubar o jogador', as
   const erro = await jog.esperar('erro');
   assert.equal(erro.codigo, 'ENVIO_RECUSADO');
 });
+
+test('regex com quantificadores aninhados (((\w*)*)*)*$ é abortada e o servidor segue respondendo', async () => {
+  const host = cliente(await app.injectWS('/ws'));
+  host.enviar({ t: 'host:criar' });
+  const { pin } = await host.esperar('sala:criada');
+  const jog = cliente(await app.injectWS('/ws'));
+  jog.enviar({ t: 'jogador:entrar', pin, apelido: 'Hacker' });
+  await jog.esperar('jogador:entrou');
+  host.enviar({ t: 'host:iniciar-rodada', desafioId: 'email' });
+  await jog.esperar('rodada:inicio');
+  jog.enviar({ t: 'jogador:enviar', padrao: String.raw`^(((\w*)*)*)*@x$`, flags: '' });
+  const r = await jog.esperar('resultado');
+  assert.equal(r.correto, false);
+  const saude = await app.inject({ url: '/health' });
+  assert.equal(saude.statusCode, 200);
+});
+
+test('telão remove jogador: o celular dele recebe REMOVIDO e o ranking não o mostra', async () => {
+  const host = cliente(await app.injectWS('/ws'));
+  host.enviar({ t: 'host:criar' });
+  const { pin } = await host.esperar('sala:criada');
+  const jog = cliente(await app.injectWS('/ws'));
+  jog.enviar({ t: 'jogador:entrar', pin, apelido: 'Chato' });
+  await jog.esperar('jogador:entrou');
+  host.enviar({ t: 'host:remover', apelido: 'Chato' });
+  const erro = await jog.esperar('erro');
+  assert.equal(erro.codigo, 'REMOVIDO');
+  let estado = await host.esperar('sala:estado');
+  while (estado.totalJogadores !== 0) estado = await host.esperar('sala:estado');
+  assert.equal(estado.ranking.length, 0);
+});
+
+test('só o telão pode remover jogadores', async () => {
+  const host = cliente(await app.injectWS('/ws'));
+  host.enviar({ t: 'host:criar' });
+  const { pin } = await host.esperar('sala:criada');
+  const jog = cliente(await app.injectWS('/ws'));
+  jog.enviar({ t: 'jogador:entrar', pin, apelido: 'Ana2' });
+  await jog.esperar('jogador:entrou');
+  jog.enviar({ t: 'host:remover', apelido: 'Ana2' });
+  const erro = await jog.esperar('erro');
+  assert.equal(erro.codigo, 'NAO_AUTORIZADO');
+});

@@ -2,6 +2,7 @@
 import { randomInt, randomUUID } from 'node:crypto';
 import { DESAFIOS, type Desafio } from './desafios.ts';
 import { calcularPontos } from './pontuacao.ts';
+import { apelidoImproprio, normalizarApelido } from './apelidos.ts';
 
 export const DURACAO_RODADA_MS = 60_000;
 export const INTERVALO_ENVIO_MS = 1_000;
@@ -49,6 +50,9 @@ export class Sala {
   rodada: Rodada | null = null;
   private usados = new Set<string>();
   private readonly maxJogadores: number;
+  /** Jogadores removidos pelo telão: ids e apelidos (normalizados) não voltam. */
+  private banidosId = new Set<string>();
+  private banidosApelido = new Set<string>();
 
   constructor(pin: string, maxJogadores = MAX_JOGADORES) {
     this.pin = pin;
@@ -59,6 +63,8 @@ export class Sala {
     const apelido = String(apelidoBruto ?? '').trim();
     if (apelido.length === 0) return { ok: false, erro: 'Informe um apelido' };
     if (apelido.length > APELIDO_MAX) return { ok: false, erro: `Apelido com no máximo ${APELIDO_MAX} caracteres` };
+    if (apelidoImproprio(apelido)) return { ok: false, erro: 'Esse apelido não é permitido. Escolha outro apelido.' };
+    if (this.banidosApelido.has(normalizarApelido(apelido))) return { ok: false, erro: 'Esse apelido foi removido pelo telão. Escolha outro apelido.' };
     if (this.jogadores.size >= this.maxJogadores) return { ok: false, erro: 'A sala está cheia' };
     const emUso = [...this.jogadores.values()].some((j) => j.apelido.toLowerCase() === apelido.toLowerCase());
     if (emUso) return { ok: false, erro: 'Esse apelido já está na sala' };
@@ -77,6 +83,21 @@ export class Sala {
 
   sair(jogadorId: string): void {
     this.jogadores.delete(jogadorId);
+  }
+
+  /** Remove (e bane) um jogador pelo apelido; devolve o id removido ou null. */
+  removerPorApelido(apelido: string): string | null {
+    const alvo = String(apelido ?? '').trim().toLowerCase();
+    const j = [...this.jogadores.values()].find((x) => x.apelido.toLowerCase() === alvo);
+    if (!j) return null;
+    this.jogadores.delete(j.id);
+    this.banidosId.add(j.id);
+    this.banidosApelido.add(normalizarApelido(j.apelido));
+    return j.id;
+  }
+
+  estaBanido(jogadorId: string): boolean {
+    return this.banidosId.has(jogadorId);
   }
 
   /** Inicia a próxima rodada (ou a de `desafioId`), sem repetir desafios até acabarem. */

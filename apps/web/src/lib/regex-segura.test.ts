@@ -21,6 +21,7 @@ function fabricaFalsa() {
     const fila: any[] = [];
     let ocupado = false;
     let morto = false;
+    setTimeout(() => ouvintes.forEach((f) => f({ data: { pronto: true } })), 0);
     const processar = () => {
       if (ocupado || morto || fila.length === 0) return;
       const p = fila.shift();
@@ -56,4 +57,30 @@ test('regex rápida enfileirada atrás de uma lenta não é acusada de ReDoS', a
   const [lenta, rapida] = await Promise.all([testarEmWorker('lento', '', ['a'], 50), testarEmWorker('^a$', '', ['a'], 50)]);
   assert.deepEqual(lenta, { erro: MSG_TEMPO_EXCEDIDO });
   assert.deepEqual(rapida, [true]);
+});
+
+test('o limite de tempo só começa quando o worker avisa que está pronto', async () => {
+  // Worker que demora 120 ms para carregar (rede/máquina lenta) e responde rápido depois.
+  definirFabricaWorker(() => {
+    const ouvintes = new Set<(ev: { data: unknown }) => void>();
+    let pronto = false;
+    const pendentes: any[] = [];
+    const responder = (p: any) =>
+      setTimeout(() => {
+        const re = new RegExp(p.padrao, p.flags);
+        for (const f of ouvintes) f({ data: { id: p.id, ok: true, testes: p.textos.map((t: string) => re.test(t)) } });
+      }, 1);
+    setTimeout(() => {
+      pronto = true;
+      for (const f of ouvintes) f({ data: { pronto: true } });
+      pendentes.splice(0).forEach(responder);
+    }, 120);
+    return {
+      addEventListener: (_: string, f: any) => ouvintes.add(f),
+      removeEventListener: (_: string, f: any) => ouvintes.delete(f),
+      postMessage: (p: any) => (pronto ? responder(p) : pendentes.push(p)),
+      terminate: () => {},
+    } as unknown as Worker;
+  });
+  assert.deepEqual(await testarEmWorker('^a$', '', ['a'], 50), [true]);
 });

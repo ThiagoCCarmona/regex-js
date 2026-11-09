@@ -1,10 +1,44 @@
-import { useCallback, useEffect, useState, type ComponentType } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ComponentType } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { SLIDES } from '../slides/conteudo.ts';
 import * as Etapas from '../slides/demos/DemosEtapas.tsx';
 import * as Extras from '../slides/demos/DemosExtras.tsx';
 
 const DEMOS: Record<string, ComponentType> = { ...Etapas, ...Extras };
+
+/** Tamanho de projeto do "palco" de cada slide; ele é escalado para caber na tela. */
+export const PALCO_LARGURA = 1280;
+export const PALCO_ALTURA = 640;
+/** Abaixo desta largura (celular) o slide flui normalmente, sem escala. */
+const LARGURA_MINIMA_PALCO = 900;
+
+/** Escala que faz o palco caber na área disponível (null = sem palco). */
+function useEscalaPalco() {
+  const area = useRef<HTMLDivElement>(null);
+  const [medida, setMedida] = useState<{ escala: number; altura: number } | null>(null);
+  useLayoutEffect(() => {
+    const el = area.current;
+    if (!el) return;
+    const medir = () => {
+      if (window.innerWidth < LARGURA_MINIMA_PALCO) return setMedida(null);
+      // Altura livre = janela − (menu acima da área) − barra inferior fixa.
+      const rodape = (document.querySelector('.slide-rodape') as HTMLElement | null)?.offsetHeight ?? 52;
+      const altura = Math.max(200, window.innerHeight - el.getBoundingClientRect().top - window.scrollY - rodape);
+      const escala = Math.min(el.clientWidth / PALCO_LARGURA, altura / PALCO_ALTURA);
+      setMedida((m) => (m && m.escala === escala && m.altura === altura ? m : { escala, altura }));
+    };
+    medir();
+    const obs = new ResizeObserver(medir);
+    obs.observe(el);
+    obs.observe(document.body);
+    window.addEventListener('resize', medir);
+    return () => {
+      obs.disconnect();
+      window.removeEventListener('resize', medir);
+    };
+  }, []);
+  return { area, escala: medida?.escala ?? null, altura: medida?.altura ?? null };
+}
 
 function digitandoEmCampo(alvo: EventTarget | null) {
   const el = alvo as HTMLElement | null;
@@ -20,6 +54,7 @@ export function Slides() {
   const Demo = slide.demo ? DEMOS[slide.demo] : undefined;
   const [notas, setNotas] = useState(false);
   const [menu, setMenu] = useState(false);
+  const { area, escala, altura } = useEscalaPalco();
 
   const ir = useCallback(
     (i: number) => {
@@ -62,7 +97,14 @@ export function Slides() {
 
   return (
     <div className={`slides${ehCapa ? ' slide-capa' : ''}`}>
-      <main className="slide" aria-roledescription="slide" aria-label={`Slide ${indice + 1} de ${SLIDES.length}: ${slide.titulo}`}>
+      <div className={`palco-area${escala ? ' com-palco' : ''}`} ref={area} style={escala && altura ? { height: altura } : undefined}>
+      <div className="palco-moldura" style={escala ? { width: PALCO_LARGURA * escala, height: PALCO_ALTURA * escala } : undefined}>
+      <main
+        className="slide"
+        style={escala ? { width: PALCO_LARGURA, height: PALCO_ALTURA, transform: `scale(${escala})` } : undefined}
+        aria-roledescription="slide"
+        aria-label={`Slide ${indice + 1} de ${SLIDES.length}: ${slide.titulo}`}
+      >
         {!ehCapa && (
           <header className="slide-cabecalho">
             <h2>{slide.titulo}</h2>
@@ -91,6 +133,8 @@ export function Slides() {
           )}
         </div>
       </main>
+      </div>
+      </div>
 
       {notas && (
         <aside className="notas" aria-label="Notas para quem apresenta">

@@ -6,6 +6,7 @@
  *   host:retomar {pin, token}          telão recarregado volta a controlar a sala
  *   host:iniciar-rodada {desafioId?}   começa a próxima rodada
  *   host:encerrar-rodada               termina a rodada antes do tempo
+ *   host:remover {apelido}             tira (e bane) um jogador da sala
  *   jogador:entrar {pin, apelido, id?} entra (ou reconecta com o id salvo)
  *   jogador:enviar {padrao, flags}     envia uma regex para avaliação
  *
@@ -35,6 +36,7 @@ export type CodigoErro =
   | 'ENVIO_RECUSADO'
   | 'RODADA_EM_ANDAMENTO'
   | 'MENSAGEM_INVALIDA'
+  | 'REMOVIDO'
   | 'INTERNO';
 
 interface SalaAoVivo {
@@ -178,6 +180,18 @@ export function registrarArena(app: FastifyInstance, limites: Limites = {}): voi
         const v = salaDoHost(ws, ctx);
         if (!v) return erro(ws, 'NAO_AUTORIZADO', 'Apenas o telão controla as rodadas');
         encerrarRodada(v);
+        avisarHost(v);
+        return;
+      }
+      case 'host:remover': {
+        const v = salaDoHost(ws, ctx);
+        if (!v) return erro(ws, 'NAO_AUTORIZADO', 'Apenas o telão remove jogadores');
+        const id = v.sala.removerPorApelido(String(msg.apelido ?? ''));
+        if (id) {
+          const alvo = v.jogadores.get(id);
+          v.jogadores.delete(id);
+          enviar(alvo, { t: 'erro', codigo: 'REMOVIDO', msg: 'Você foi removido da sala pelo telão.' });
+        }
         avisarHost(v);
         return;
       }

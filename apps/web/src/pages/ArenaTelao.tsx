@@ -2,13 +2,20 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Qr } from '../components/Qr.tsx';
 import { useArena, useTique, type EstadoSala, type LinhaRanking } from '../jogos/arena/useArena.ts';
+import { SLIDES } from '../slides/conteudo.ts';
+
+/** Slide da Arena (para o botão de voltar). */
+const SLIDE_ARENA = SLIDES.findIndex((s) => s.id === 'arena') + 1;
 
 const CHAVE = 'arena:telao';
 
-/** PIN e token secreto da sala deste telão (para retomar após recarregar a página). */
+/**
+ * PIN e token secreto da sala deste telão. Fica em localStorage (compartilhado
+ * entre abas): voltar aos slides e abrir o telão de novo retoma a MESMA sala.
+ */
 function lerSala(): { pin: string; token: string } | null {
   try {
-    return JSON.parse(sessionStorage.getItem(CHAVE) ?? 'null');
+    return JSON.parse(localStorage.getItem(CHAVE) ?? 'null');
   } catch {
     return null;
   }
@@ -16,14 +23,14 @@ function lerSala(): { pin: string; token: string } | null {
 
 function salvarSala(s: { pin: string; token: string } | null) {
   try {
-    if (s) sessionStorage.setItem(CHAVE, JSON.stringify(s));
-    else sessionStorage.removeItem(CHAVE);
+    if (s) localStorage.setItem(CHAVE, JSON.stringify(s));
+    else localStorage.removeItem(CHAVE);
   } catch {
-    /* sem sessionStorage: recarregar a página cria outra sala */
+    /* sem localStorage: recarregar a página cria outra sala */
   }
 }
 
-function Ranking({ linhas, mostrarGanho }: { linhas: LinhaRanking[]; mostrarGanho?: boolean }) {
+function Ranking({ linhas, mostrarGanho, aoRemover }: { linhas: LinhaRanking[]; mostrarGanho?: boolean; aoRemover?: (apelido: string) => void }) {
   if (linhas.length === 0) return <p className="estado-conexao">Ninguém entrou ainda. Leia o QR code para jogar.</p>;
   return (
     <ol className="ranking">
@@ -34,6 +41,11 @@ function Ranking({ linhas, mostrarGanho }: { linhas: LinhaRanking[]; mostrarGanh
             {j.pontos}
             {mostrarGanho && j.pontosRodada > 0 && <span className="ganho">+{j.pontosRodada}</span>}
           </span>
+          {aoRemover && (
+            <button type="button" className="remover" aria-label={`Remover ${j.apelido} da sala`} title="Remover da sala" onClick={() => aoRemover(j.apelido)}>
+              ×
+            </button>
+          )}
         </li>
       ))}
     </ol>
@@ -141,7 +153,7 @@ export function ArenaTelao() {
                 {rodada ? 'Próxima rodada' : 'Iniciar primeira rodada'}
               </button>
             )}
-            <Link to="/slide/13" className="botao-link" style={{ background: 'transparent', color: 'var(--tinta)', border: '2px solid var(--tinta)' }}>
+            <Link to={`/slide/${SLIDE_ARENA}`} className="botao-link" style={{ background: 'transparent', color: 'var(--tinta)', border: '2px solid var(--tinta)' }}>
               Voltar aos slides
             </Link>
           </div>
@@ -152,7 +164,13 @@ export function ArenaTelao() {
 
       <aside aria-label="Ranking">
         <h2>Ranking</h2>
-        <Ranking linhas={estado?.ranking ?? []} mostrarGanho={!!rodada && !ativa} />
+        <Ranking
+          linhas={estado?.ranking ?? []}
+          mostrarGanho={!!rodada && !ativa}
+          aoRemover={(apelido) => {
+            if (window.confirm(`Remover "${apelido}" da sala? O apelido não poderá ser usado de novo.`)) enviar({ t: 'host:remover', apelido });
+          }}
+        />
       </aside>
     </main>
   );

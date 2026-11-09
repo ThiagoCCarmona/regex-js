@@ -8,6 +8,9 @@ import type { Casamento, PedidoRegex, RespostaRegex } from './regex-segura.ts';
 
 const LIMITE_CASAMENTOS = 500;
 
+// Avisa que carregou: o cronômetro do chamador só começa depois disto.
+(self as unknown as Worker).postMessage({ pronto: true });
+
 self.onmessage = (ev: MessageEvent<PedidoRegex>) => {
   const p = ev.data;
   let resposta: RespostaRegex;

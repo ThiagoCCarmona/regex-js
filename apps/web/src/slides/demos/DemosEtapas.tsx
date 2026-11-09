@@ -146,13 +146,16 @@ export function Etapa3() {
         </p>
       </div>
       <div>
-        <table className="tabela">
+        <table className="tabela tabela-datas">
+          <caption>
+            <code>m.groups</code> de cada data
+          </caption>
           <thead>
             <tr>
               <th>data</th>
-              <th>m.groups.dia</th>
-              <th>.mes</th>
-              <th>.ano</th>
+              <th>dia</th>
+              <th>mes</th>
+              <th>ano</th>
             </tr>
           </thead>
           <tbody>

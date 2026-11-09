@@ -90,7 +90,7 @@
   margin-bottom: 1rem;
 }
 .arena label.campo-demo { margin-bottom: 0.8rem; }
-.arena .pin { font-family: var(--f-codigo); font-size: 1.6rem; letter-spacing: 0.2em; width: 7ch; }
+.arena .pin { font-family: var(--f-codigo); font-size: 1.6rem; letter-spacing: 0.25em; width: 10rem; max-width: 100%; text-align: center; }
 .lista-desafio {
   list-style: none;
   padding: 0;
@@ -186,6 +186,18 @@
 .ranking .apelido { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ranking .pts { font-family: var(--f-codigo); font-weight: 700; }
 .ranking .ganho { color: var(--verde); font-size: 0.85rem; margin-left: 0.4rem; }
+.ranking li { grid-template-columns: 2.2em minmax(0, 1fr) auto auto; }
+.ranking .remover {
+  padding: 0 0.45em;
+  font-size: 1rem;
+  line-height: 1.4;
+  background: transparent;
+  color: var(--texto-suave);
+  border: 1px solid var(--borda);
+  opacity: 0.55;
+}
+.ranking .remover:hover,
+.ranking .remover:focus-visible { opacity: 1; color: var(--vermelho); border-color: var(--vermelho); }
 .estado-conexao { color: var(--texto-suave); font-size: 0.9rem; }
 
 @media (max-width: 860px) {

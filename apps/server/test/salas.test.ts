@@ -118,3 +118,24 @@ test('pontuação usa o horário do envio, mesmo que a avaliação termine depoi
   sala.encerrarRodada(); // a rodada termina enquanto a regex ainda é avaliada
   assert.ok(sala.registrarResultado(id, true, 5, 59_900) > 0);
 });
+
+test('apelido impróprio é recusado com mensagem neutra', () => {
+  const g = new GerenciadorSalas();
+  const sala = g.criarSala()!;
+  const r = sala.entrar('P0rr4');
+  assert.equal(r.ok, false);
+  if (!r.ok) assert.match(r.erro, /outro apelido/i);
+});
+
+test('telão remove um jogador pelo apelido; ele não volta com o mesmo apelido nem id', () => {
+  const g = new GerenciadorSalas();
+  const sala = g.criarSala()!;
+  const r = sala.entrar('Zoeira');
+  assert.ok(r.ok);
+  const removido = sala.removerPorApelido('zoeira');
+  assert.equal(removido, r.ok ? r.jogador.id : '');
+  assert.equal(sala.jogadores.size, 0);
+  assert.equal(sala.entrar('Zoeira').ok, false);
+  assert.equal(sala.estaBanido(r.ok ? r.jogador.id : ''), true);
+  assert.equal(sala.removerPorApelido('ninguem'), null);
+});

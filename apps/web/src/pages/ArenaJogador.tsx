@@ -80,7 +80,7 @@ export function ArenaJogador() {
         case 'erro':
           setAviso(m.msg);
           // Só sai da sala se ela deixou de existir (não por um envio recusado).
-          if (m.codigo === 'SALA_INEXISTENTE' || m.codigo === 'SALA_ENCERRADA') {
+          if (m.codigo === 'SALA_INEXISTENTE' || m.codigo === 'SALA_ENCERRADA' || m.codigo === 'REMOVIDO') {
             setSessao(null);
             salvarSessao(null);
           }

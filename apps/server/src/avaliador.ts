@@ -12,6 +12,8 @@ import { Worker } from 'node:worker_threads';
 export const TAMANHO_MAXIMO = 100;
 export const FLAGS_PERMITIDAS = /^[iu]*$/;
 export const TIMEOUT_MS = 200;
+/** Máximo de avaliações esperando na fila; acima disso, recusa na hora. */
+export const FILA_MAXIMA = 20;
 
 export type Avaliacao =
   | { ok: true; acertosDeve: boolean[]; acertosNaoDeve: boolean[]; correto: boolean }
@@ -79,6 +81,9 @@ export function avaliarRegex(padrao: string, flags: string, deve: string[], naoD
   }
   if (typeof flags !== 'string' || !FLAGS_PERMITIDAS.test(flags)) {
     return Promise.resolve({ ok: false, erro: 'Flags permitidas: i e u' });
+  }
+  if (fila.length >= FILA_MAXIMA) {
+    return Promise.resolve({ ok: false, erro: 'Servidor ocupado avaliando outras regex. Tente de novo em instantes.' });
   }
   return new Promise((resolver) => {
     fila.push({ id: proximoId++, padrao, flags, deve, naoDeve, resolver });

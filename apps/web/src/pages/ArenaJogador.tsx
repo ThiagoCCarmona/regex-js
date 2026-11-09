@@ -79,7 +79,8 @@ export function ArenaJogador() {
           break;
         case 'erro':
           setAviso(m.msg);
-          if (m.msg.includes('Sala não encontrada') || m.msg.includes('encerrada')) {
+          // Só sai da sala se ela deixou de existir (não por um envio recusado).
+          if (m.codigo === 'SALA_INEXISTENTE' || m.codigo === 'SALA_ENCERRADA') {
             setSessao(null);
             salvarSessao(null);
           }

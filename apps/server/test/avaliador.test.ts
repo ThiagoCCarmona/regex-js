@@ -58,3 +58,11 @@ test('avaliações simultâneas retornam cada uma o seu resultado', async () => 
   assert.equal(a.ok && a.correto, true);
   assert.equal(b.ok && b.correto, false);
 });
+
+test('fila de avaliação é limitada: excesso recebe "servidor ocupado" na hora', async () => {
+  const { FILA_MAXIMA } = await import('../src/avaliador.ts');
+  const pedidos = Array.from({ length: FILA_MAXIMA + 5 }, () => avaliarRegex('^a$', '', ['a'], []));
+  const respostas = await Promise.all(pedidos);
+  const ocupado = respostas.filter((r) => !r.ok && /ocupado/i.test(r.erro)).length;
+  assert.ok(ocupado >= 4, `esperava >= 4 recusas, veio ${ocupado}`);
+});

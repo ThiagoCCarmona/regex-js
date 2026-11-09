@@ -3,13 +3,23 @@ import { Link } from 'react-router-dom';
 import { Qr } from '../components/Qr.tsx';
 import { useArena, useTique, type EstadoSala, type LinhaRanking } from '../jogos/arena/useArena.ts';
 
-const CHAVE_PIN = 'arena:telao:pin';
+const CHAVE = 'arena:telao';
 
-function lerPin(): string | null {
+/** PIN e token secreto da sala deste telão (para retomar após recarregar a página). */
+function lerSala(): { pin: string; token: string } | null {
   try {
-    return sessionStorage.getItem(CHAVE_PIN);
+    return JSON.parse(sessionStorage.getItem(CHAVE) ?? 'null');
   } catch {
     return null;
+  }
+}
+
+function salvarSala(s: { pin: string; token: string } | null) {
+  try {
+    if (s) sessionStorage.setItem(CHAVE, JSON.stringify(s));
+    else sessionStorage.removeItem(CHAVE);
+  } catch {
+    /* sem sessionStorage: recarregar a página cria outra sala */
   }
 }
 
@@ -39,11 +49,7 @@ export function ArenaTelao() {
   const { conectado, enviar, restante } = useArena(
     (m) => {
       if (m.t === 'sala:criada') {
-        try {
-          sessionStorage.setItem(CHAVE_PIN, m.pin);
-        } catch {
-          /* sem sessionStorage: recarregar a página cria outra sala */
-        }
+        salvarSala({ pin: m.pin, token: m.token });
       } else if (m.t === 'sala:estado') {
         setEstado(m);
       } else if (m.t === 'rodada:inicio') {
@@ -51,19 +57,16 @@ export function ArenaTelao() {
       } else if (m.t === 'rodada:fim') {
         setSolucao(m.solucao);
       } else if (m.t === 'erro') {
-        if (m.msg === 'Sala não encontrada') {
-          try {
-            sessionStorage.removeItem(CHAVE_PIN);
-          } catch {
-            /* ignorado */
-          }
+        if (m.codigo === 'SALA_INEXISTENTE' || m.codigo === 'NAO_AUTORIZADO') {
+          // A sala salva expirou ou pertence a outro telão: cria uma nova.
+          salvarSala(null);
           enviar({ t: 'host:criar' });
         } else setAviso(m.msg);
       }
     },
     (env) => {
-      const pin = lerPin();
-      env(pin ? { t: 'host:retomar', pin } : { t: 'host:criar' });
+      const s = lerSala();
+      env(s ? { t: 'host:retomar', pin: s.pin, token: s.token } : { t: 'host:criar' });
     },
   );
 

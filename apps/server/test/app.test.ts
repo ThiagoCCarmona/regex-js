@@ -106,3 +106,56 @@ test('mensagem malformada não derruba a conexão', async () => {
   const erro = await c.esperar('erro');
   assert.ok(erro.msg);
 });
+
+test('telão recebe um token secreto junto com o PIN', async () => {
+  const host = cliente(await app.injectWS('/ws'));
+  host.enviar({ t: 'host:criar' });
+  const criada = await host.esperar('sala:criada');
+  assert.match(criada.token, /^[0-9a-f-]{20,}$/);
+});
+
+test('segundo host:criar no mesmo socket libera a sala anterior', async () => {
+  const host = cliente(await app.injectWS('/ws'));
+  host.enviar({ t: 'host:criar' });
+  const { pin: antigo } = await host.esperar('sala:criada');
+  host.enviar({ t: 'host:criar' });
+  await host.esperar('sala:criada');
+  const jog = cliente(await app.injectWS('/ws'));
+  jog.enviar({ t: 'jogador:entrar', pin: antigo, apelido: 'Zé' });
+  const erro = await jog.esperar('erro');
+  assert.equal(erro.codigo, 'SALA_INEXISTENTE');
+});
+
+test('host:retomar sem o token correto é recusado', async () => {
+  const host = cliente(await app.injectWS('/ws'));
+  host.enviar({ t: 'host:criar' });
+  const { pin } = await host.esperar('sala:criada');
+  const intruso = cliente(await app.injectWS('/ws'));
+  intruso.enviar({ t: 'host:retomar', pin, token: 'chute' });
+  const erro = await intruso.esperar('erro');
+  assert.equal(erro.codigo, 'NAO_AUTORIZADO');
+});
+
+test('telão que perdeu o controle (retomado em outra aba) não comanda mais a sala', async () => {
+  const a = cliente(await app.injectWS('/ws'));
+  a.enviar({ t: 'host:criar' });
+  const { pin, token } = await a.esperar('sala:criada');
+  const b = cliente(await app.injectWS('/ws'));
+  b.enviar({ t: 'host:retomar', pin, token });
+  await b.esperar('sala:criada');
+  a.enviar({ t: 'host:iniciar-rodada' });
+  const erro = await a.esperar('erro');
+  assert.equal(erro.codigo, 'NAO_AUTORIZADO');
+});
+
+test('envio fora de rodada devolve erro com código, sem derrubar o jogador', async () => {
+  const host = cliente(await app.injectWS('/ws'));
+  host.enviar({ t: 'host:criar' });
+  const { pin } = await host.esperar('sala:criada');
+  const jog = cliente(await app.injectWS('/ws'));
+  jog.enviar({ t: 'jogador:entrar', pin, apelido: 'Lu' });
+  await jog.esperar('jogador:entrou');
+  jog.enviar({ t: 'jogador:enviar', padrao: 'a', flags: '' });
+  const erro = await jog.esperar('erro');
+  assert.equal(erro.codigo, 'ENVIO_RECUSADO');
+});

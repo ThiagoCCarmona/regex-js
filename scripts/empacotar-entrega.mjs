@@ -23,6 +23,16 @@ if (faltando.length) {
   process.exit(1);
 }
 
+// Pendências que o autor precisa resolver antes de enviar ao professor.
+const PENDENCIAS = [
+  ['README.md', /demais integrantes/, 'nomes dos demais integrantes da equipe'],
+  ['uso_ia.md', /^- \[ \]/m, 'itens da revisão do autor ainda não marcados'],
+  ['uso_ia.md', /_{4,}/, 'data e assinatura da declaração de IA'],
+];
+const pendentes = PENDENCIAS.filter(([arq, re]) => re.test(readFileSync(join(origem, arq), 'utf8')));
+for (const [arq, , descricao] of pendentes) console.warn(`⚠ Pendência em ${arq}: ${descricao}.`);
+if (pendentes.length) console.warn('  Resolva as pendências e rode "pnpm entrega" de novo antes de enviar.\n');
+
 const ignorar = (caminho) => caminho.split(sep).includes('node_modules');
 
 rmSync(destino, { recursive: true, force: true });

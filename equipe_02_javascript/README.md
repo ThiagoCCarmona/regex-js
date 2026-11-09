@@ -85,8 +85,7 @@ São 50 testes em `testes/`, com casos positivos, negativos e de borda, incluind
 - espaços nas pontas;
 - reuso de regex (`lastIndex`);
 - anos bissextos;
-- arquivos de log com quebras de linha do Windows (`
-`) ou gravados com BOM UTF-8;
+- arquivos de log com quebras de linha do Windows (`\r\n`) ou gravados com BOM UTF-8;
 - prioridade de operadores (`==` × `=`);
 - `!` isolado.
 

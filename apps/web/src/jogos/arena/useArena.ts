@@ -31,7 +31,7 @@ export interface EstadoSala {
 }
 
 export type MensagemServidor =
-  | { t: 'sala:criada'; pin: string }
+  | { t: 'sala:criada'; pin: string; token: string }
   | ({ t: 'sala:estado' } & EstadoSala)
   | { t: 'jogador:entrou'; id: string; apelido: string; pin: string; pontos: number }
   | { t: 'rodada:inicio'; numero: number; desafio: DesafioPublico; fimEm: number; duracaoMs: number; agora: number }
@@ -47,7 +47,7 @@ export type MensagemServidor =
       pontos: number;
       total: number;
     }
-  | { t: 'erro'; msg: string };
+  | { t: 'erro'; codigo: string; msg: string };
 
 export type Enviar = (msg: object) => void;
 

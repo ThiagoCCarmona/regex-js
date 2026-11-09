@@ -1,12 +1,12 @@
 /** Demonstrações dos slides de abertura, comparação, teoria, ReDoS e encerramento. */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Fita } from '../../components/Fita.tsx';
 import { Qr } from '../../components/Qr.tsx';
 import { URL_PUBLICA, URL_REPOSITORIO } from '../../lib/config.ts';
-import { cronometrarEmWorker } from '../../lib/regex-segura.ts';
+import { casamentosEmWorker, cronometrarEmWorker } from '../../lib/regex-segura.ts';
+import type { Marca } from '../../components/Fita.tsx';
 import { EQUIPE, SLIDES } from '../conteudo.ts';
-import { marcasDe } from './util.ts';
 
 /* ---------------- Capa ---------------- */
 const REGEX_CAPA = 'regulares|Java\\w+';
@@ -35,12 +35,21 @@ export function Capa() {
     return () => window.clearTimeout(timer);
   }, []);
 
-  const marcas = useMemo(() => {
-    try {
-      return padrao ? marcasDe(titulo, new RegExp(padrao, 'g')).filter((m) => m.fim > m.inicio) : [];
-    } catch {
-      return [];
+  // A regex da capa é editável ao vivo: roda no worker, como toda regex digitada.
+  const [marcas, setMarcas] = useState<Marca[]>([]);
+  useEffect(() => {
+    let vivo = true;
+    if (!padrao) {
+      setMarcas([]);
+      return;
     }
+    casamentosEmWorker(padrao, 'g', titulo).then((r) => {
+      if (!vivo) return;
+      setMarcas('erro' in r ? [] : r.casamentos.filter((c) => c.fim > c.inicio).map((c) => ({ inicio: c.inicio, fim: c.fim })));
+    });
+    return () => {
+      vivo = false;
+    };
   }, [padrao, titulo]);
 
   return (

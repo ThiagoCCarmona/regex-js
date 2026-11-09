@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { CampoRegex } from '../components/CampoRegex.tsx';
 import { Fita } from '../components/Fita.tsx';
-import { casamentosEmWorker, type Casamento } from '../lib/regex-segura.ts';
+import { casamentosEmWorker, literalRegex, type Casamento } from '../lib/regex-segura.ts';
 
 const EXEMPLOS: Array<{ nome: string; padrao: string; flags: string; texto: string }> = [
   {
@@ -69,7 +69,7 @@ export function Playground() {
   const nomes = casamentos[0]?.nomeados ? Object.keys(casamentos[0].nomeados) : [];
   const qtdGrupos = casamentos[0]?.grupos.length ?? 0;
   // RegExp.prototype.source escapa as barras: /a\/b/ e não /a/b/.
-  const literal = erro ? `/${padrao}/${flags}` : `/${new RegExp(padrao).source}/${flags}`;
+  const literal = literalRegex(padrao, flags);
 
   return (
     <main className="pagina">

@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import { NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { Slides } from './pages/Slides.tsx';
 import { Playground } from './pages/Playground.tsx';
+import { LimiteDeErro } from './components/LimiteDeErro.tsx';
 
 const Invaders = lazy(() => import('./pages/Invaders.tsx'));
 const ArenaJogador = lazy(() => import('./pages/ArenaJogador.tsx'));
@@ -61,6 +62,7 @@ export function App() {
   return (
     <>
       {!telaCheia && <Nav />}
+      <LimiteDeErro chave={pathname}>
       <Suspense fallback={<p className="pagina">Carregando…</p>}>
         <Routes>
           <Route path="/" element={<Slides />} />
@@ -82,6 +84,7 @@ export function App() {
           />
         </Routes>
       </Suspense>
+      </LimiteDeErro>
     </>
   );
 }

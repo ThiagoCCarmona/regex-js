@@ -1,0 +1,10 @@
+**/node_modules
+**/dist
+.git
+.superpowers
+.claude
+*.log
+.env
+docs/superpowers
+equipe_02_javascript/relatorio.pdf
+equipe_02_javascript/apresentacao.pptx

@@ -1,0 +1,13 @@
+services:
+  regex-js:
+    build:
+      context: .
+      args:
+        VITE_PUBLIC_URL: ${VITE_PUBLIC_URL:-https://regex-js.tccodes.com.br}
+    image: regex-js:latest
+    container_name: regex-js
+    restart: unless-stopped
+    ports:
+      - "${HOST_PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production

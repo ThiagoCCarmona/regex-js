@@ -1,0 +1,12 @@
+Equipe 2 — Expressões Regulares em JavaScript / Node.js
+Linguagens Formais e Autômatos — Prof. Luciano Cardoso — 2º semestre de 2026
+Integrante: Thiago Corobinski Carmona
+
+Repositório no GitHub (código completo, testes, site e documentação):
+https://github.com/ThiagoCCarmona/regex-js
+
+Site da apresentação (slides, demonstrações ao vivo, Regex Invaders e Regex Arena):
+https://regex-js.tccodes.com.br
+
+Esta pasta (equipe_02_javascript/) é a entrega do trabalho e também está no
+repositório, no caminho equipe_02_javascript/.

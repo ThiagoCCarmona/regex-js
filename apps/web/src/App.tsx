@@ -55,8 +55,8 @@ function Nav() {
 
 export function App() {
   const { pathname } = useLocation();
-  // Nos slides e no telão a navegação fica escondida (modo apresentação).
-  const telaCheia = pathname === '/' || pathname.startsWith('/slide/') || pathname === '/arena/telao';
+  // Nos slides e na Arena a navegação fica escondida (modo apresentação / celular).
+  const telaCheia = pathname === '/' || pathname.startsWith('/slide/') || pathname.startsWith('/arena');
 
   return (
     <>

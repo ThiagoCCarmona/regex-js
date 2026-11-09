@@ -12,10 +12,10 @@ export interface Casamento {
   nomeados: Record<string, string | undefined> | null;
 }
 
-export type PedidoRegex = { id: number; padrao: string; flags: string; textos: string[]; op: 'casamentos' | 'testes' };
+export type PedidoRegex = { id: number; padrao: string; flags: string; textos: string[]; op: 'casamentos' | 'testes' | 'tempo' };
 
 export type RespostaRegex =
-  | { id: number; ok: true; casamentos?: Casamento[]; testes?: boolean[] }
+  | { id: number; ok: true; casamentos?: Casamento[]; testes?: boolean[]; ms?: number }
   | { id: number; ok: false; erro: string };
 
 export const MSG_TEMPO_EXCEDIDO = 'Tempo excedido: a regex entrou em backtracking catastrófico (ReDoS).';
@@ -88,6 +88,12 @@ export async function casamentosEmWorker(
   if ('erro' in sintaxe) return sintaxe;
   const r = await executar({ padrao, flags, textos: [texto], op: 'casamentos' }, timeoutMs);
   return r.ok ? { casamentos: r.casamentos ?? [] } : { erro: r.erro };
+}
+
+/** Mede quanto tempo (ms) re.test(texto) leva; erro se passar do timeout. */
+export async function cronometrarEmWorker(padrao: string, flags: string, texto: string, timeoutMs: number): Promise<{ ms: number } | { erro: string }> {
+  const r = await executar({ padrao, flags, textos: [texto], op: 'tempo' }, timeoutMs);
+  return r.ok ? { ms: r.ms ?? 0 } : { erro: r.erro };
 }
 
 /** Testa a regex contra cada texto; true = casou em algum ponto. */

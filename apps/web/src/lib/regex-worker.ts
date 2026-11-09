@@ -12,7 +12,12 @@ self.onmessage = (ev: MessageEvent<PedidoRegex>) => {
   const p = ev.data;
   let resposta: RespostaRegex;
   try {
-    if (p.op === 'testes') {
+    if (p.op === 'tempo') {
+      const re = new RegExp(p.padrao, p.flags);
+      const inicio = performance.now();
+      re.test(p.textos[0]);
+      resposta = { id: p.id, ok: true, ms: performance.now() - inicio };
+    } else if (p.op === 'testes') {
       const re = new RegExp(p.padrao, p.flags.replace(/[gy]/g, ''));
       resposta = { id: p.id, ok: true, testes: p.textos.map((t) => re.test(t)) };
     } else {

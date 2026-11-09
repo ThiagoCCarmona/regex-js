@@ -426,3 +426,17 @@ mark.marca-azul { background: var(--azul-fundo); color: var(--texto); box-shadow
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Regex e código precisam mostrar os caracteres reais: sem ligaduras (>= não vira ≥). */
+code,
+kbd,
+pre,
+input,
+textarea,
+.mono,
+.fita,
+.texto-marcado,
+.token {
+  font-variant-ligatures: none;
+  font-feature-settings: 'liga' 0, 'calt' 0;
+}

@@ -1,0 +1,29 @@
+# Deploy atrás de um Traefik já existente (rede externa "proxy", HTTPS automático).
+# Uso no servidor:
+#   docker compose -f docker-compose.traefik.yml up -d --build
+# Variáveis opcionais (arquivo .env ao lado): DOMINIO, CERTRESOLVER, REDE_TRAEFIK.
+services:
+  regex-js:
+    build:
+      context: .
+      args:
+        VITE_PUBLIC_URL: https://${DOMINIO:-regex-js.tccodes.com.br}
+    image: regex-js:latest
+    container_name: regex-js
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+    networks:
+      - proxy
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=${REDE_TRAEFIK:-proxy}
+      - traefik.http.routers.regex-js.rule=Host(`${DOMINIO:-regex-js.tccodes.com.br}`)
+      - traefik.http.routers.regex-js.entrypoints=websecure
+      - traefik.http.routers.regex-js.tls.certresolver=${CERTRESOLVER:-myresolver}
+      - traefik.http.services.regex-js.loadbalancer.server.port=3000
+
+networks:
+  proxy:
+    name: ${REDE_TRAEFIK:-proxy}
+    external: true

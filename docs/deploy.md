@@ -23,6 +23,26 @@ git pull && docker compose up -d --build
 
 Crie um registro `A` (ou `CNAME`) para `regex-js.tccodes.com.br` apontando para o servidor.
 
+## 3. Traefik (usado em produção)
+
+Se o servidor já tem um Traefik com uma rede Docker externa (aqui chamada `proxy`), entrypoint `websecure` e um resolver ACME (`myresolver`), use o compose próprio. Ele não publica portas no host: o Traefik encaminha o tráfego pela rede `proxy`.
+
+```bash
+git clone https://github.com/ThiagoCCarmona/regex-js.git
+cd regex-js
+docker compose -f docker-compose.traefik.yml up -d --build
+```
+
+Para atualizar depois:
+
+```bash
+git pull && docker compose -f docker-compose.traefik.yml up -d --build
+```
+
+O Traefik repassa o WebSocket da Arena (`/ws`) sem configuração extra. Para outro domínio, rede ou resolver, crie um `.env` ao lado do compose com `DOMINIO=...`, `REDE_TRAEFIK=...` ou `CERTRESOLVER=...`.
+
+O certificado é emitido pelo desafio TLS-ALPN, que exige o registro DNS já apontando para o servidor. Se o container subiu antes do DNS, recrie-o depois que o DNS propagar (`docker compose -f docker-compose.traefik.yml up -d --force-recreate`) para o Traefik tentar de novo.
+
 ## 3a. Caddy (HTTPS automático)
 
 ```caddy

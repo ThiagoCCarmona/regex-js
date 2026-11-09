@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { CampoRegex } from '../components/CampoRegex.tsx';
 import { useArena, useTique, type DesafioPublico, type MensagemServidor } from '../jogos/arena/useArena.ts';
 import { testarEmWorker } from '../lib/regex-segura.ts';
+import { adicionarAoHistorico } from '../lib/historico.ts';
 
 const CHAVE = 'arena:jogador';
 
@@ -42,6 +43,8 @@ export function ArenaJogador() {
   const [resultado, setResultado] = useState<Resultado | null>(null);
   const [pontos, setPontos] = useState(0);
   const [padrao, setPadrao] = useState('');
+  /** Regex já enviadas na partida: ↑ e ↓ navegam nelas, como no CMD. */
+  const [historico, setHistorico] = useState<string[]>([]);
   const [previa, setPrevia] = useState<{ deve: boolean[]; nao: boolean[] } | null>(null);
   const [erroRegex, setErroRegex] = useState<string | null>(null);
   const [aviso, setAviso] = useState('');
@@ -239,7 +242,10 @@ export function ArenaJogador() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                if (padrao && !erroRegex) enviar({ t: 'jogador:enviar', padrao, flags: '' });
+                if (padrao && !erroRegex) {
+                  enviar({ t: 'jogador:enviar', padrao, flags: '' });
+                  setHistorico((h) => adicionarAoHistorico(h, padrao));
+                }
               }}
             >
               <CampoRegex
@@ -247,7 +253,11 @@ export function ArenaJogador() {
                 aoMudarPadrao={(v) => {
                   setPadrao(v);
                   setResultado(null);
-                }} erro={erroRegex} rotulo={`Sua regex. Dica: ${rodada.desafio.dica}`} />
+                }}
+                erro={erroRegex}
+                rotulo={`Sua regex. Dica: ${rodada.desafio.dica}`}
+                historico={historico}
+              />
               <button type="submit" style={{ marginTop: '0.6rem', width: '100%' }} disabled={!padrao || !!erroRegex || segundos === 0}>
                 Enviar ({padrao.length} caracteres)
               </button>

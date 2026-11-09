@@ -5,6 +5,7 @@ import { IconeEscudo, IconeInvasor, Mira } from '../jogos/invaders/icones.tsx';
 import { ALVOS_POR_FASE, criarEstado, disparar, iniciarJogo, passo, proximaFase, BONUS_COMBO, PONTOS_ALVO, type Estado, type Palavra } from '../jogos/invaders/motor.ts';
 import { definirSom, somLigado, sons } from '../jogos/invaders/som.ts';
 import { testarEmWorker } from '../lib/regex-segura.ts';
+import { adicionarAoHistorico } from '../lib/historico.ts';
 
 /** A partir daqui (em % da descida) a palavra entra na zona de perigo. */
 const ZONA_PERIGO = 66;
@@ -62,6 +63,8 @@ let proximoEfeito = 1;
 export function Invaders() {
   const [estado, setEstado] = useState<Estado>(criarEstado);
   const [padrao, setPadrao] = useState('');
+  /** Regex já disparadas: ↑ e ↓ navegam nelas, como no CMD. */
+  const [historico, setHistorico] = useState<string[]>([]);
   const [erro, setErro] = useState<string | null>(null);
   const [mira, setMira] = useState<Set<number>>(new Set());
   const [recorde, setRecorde] = useState(lerRecorde);
@@ -240,6 +243,7 @@ export function Invaders() {
     window.setTimeout(() => setFlutuantes((f) => f.filter((x) => !novosFlut.includes(x))), 1100);
 
     setEstado((e) => disparar(e, ids));
+    setHistorico((h) => adicionarAoHistorico(h, padrao));
     // Disparo feito: limpa o campo para a próxima regex (regex inválida fica para correção).
     setPadrao('');
   }, [padrao]);
@@ -388,7 +392,8 @@ export function Invaders() {
 
       <div className="controle-jogo" ref={entrada}>
         <CampoRegex
-          rotulo={jogando ? `Sua regex (Enter dispara). Dica: ${fase.dica}` : 'Sua regex (o campo libera quando a fase começa)'}
+          rotulo={jogando ? `Sua regex (Enter dispara, ↑ repete a anterior). Dica: ${fase.dica}` : 'Sua regex (o campo libera quando a fase começa)'}
+          historico={historico}
           padrao={padrao}
           aoMudarPadrao={jogando ? setPadrao : undefined}
           erro={erro}

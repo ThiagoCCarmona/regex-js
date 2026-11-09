@@ -1,0 +1,193 @@
+/* ---------- Regex Invaders ---------- */
+.jogo-invaders { max-width: 1100px; }
+.hud {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+.hud h1 { margin-bottom: 0.2rem; font-size: clamp(1.8rem, 4vw, 2.8rem); }
+.objetivo { margin: 0; }
+.placar {
+  display: flex;
+  gap: 1.25rem;
+  margin: 0;
+}
+.placar div { text-align: right; }
+.placar dt { font-size: 0.8rem; color: var(--texto-suave); font-weight: 700; }
+.placar dd { margin: 0; font-family: var(--f-codigo); font-size: 1.4rem; font-weight: 700; color: var(--tinta-forte); }
+
+.campo-jogo {
+  position: relative;
+  height: min(58vh, 520px);
+  min-height: 320px;
+  border: 2px solid var(--tinta);
+  border-bottom: 6px solid var(--vermelho);
+  border-radius: 10px 10px 4px 4px;
+  background: color-mix(in srgb, var(--papel-2) 70%, transparent);
+  overflow: hidden;
+}
+.invasor {
+  position: absolute;
+  transform: translateY(-50%);
+  font-family: var(--f-codigo);
+  font-weight: 700;
+  font-size: clamp(0.85rem, 1.6vw, 1.1rem);
+  padding: 0.15em 0.5em;
+  border-radius: 4px;
+  border: 2px solid;
+  background: var(--papel-2);
+  white-space: nowrap;
+  font-variant-ligatures: none;
+  transition: transform 0.12s ease, opacity 0.3s ease;
+}
+.invasor.inimiga { color: var(--vermelho); border-color: var(--vermelho); border-style: dashed; }
+.invasor.aliada { color: var(--verde); border-color: var(--verde); }
+.invasor.na-mira { box-shadow: 0 0 0 4px var(--marca); }
+.invasor.atingida {
+  background: var(--marca);
+  color: var(--marca-texto);
+  transform: translateY(-50%) scale(1.25) rotate(-3deg);
+  opacity: 0.25;
+}
+.exemplo-inimiga { color: var(--vermelho); font-weight: 700; border-bottom: 2px dashed; }
+.exemplo-aliada { color: var(--verde); font-weight: 700; border-bottom: 2px solid; }
+
+.sobreposicao {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding: clamp(1rem, 4vw, 3rem);
+  background: color-mix(in srgb, var(--papel) 94%, transparent);
+}
+.sobreposicao p { max-width: 60ch; }
+.sobreposicao .dica { color: var(--texto-suave); }
+
+.controle-jogo {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-end;
+  margin-top: 1rem;
+}
+.controle-jogo .campo-regex { flex: 1; min-width: 0; }
+.controle-jogo > button { padding: 0.62em 1.2em; }
+.aviso-jogo { min-height: 1.6em; color: var(--texto-suave); font-weight: 700; margin-top: 0.4rem; }
+
+/* ---------- Regex Arena ---------- */
+.arena {
+  max-width: 560px;
+}
+.arena .cartao {
+  background: var(--papel-2);
+  border: 2px solid var(--tinta);
+  border-radius: 10px;
+  padding: 1.1rem;
+  margin-bottom: 1rem;
+}
+.arena label.campo-demo { margin-bottom: 0.8rem; }
+.arena .pin { font-family: var(--f-codigo); font-size: 1.6rem; letter-spacing: 0.2em; width: 7ch; }
+.lista-desafio {
+  list-style: none;
+  padding: 0;
+  margin: 0.4rem 0 0.8rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.lista-desafio li {
+  font-family: var(--f-codigo);
+  font-variant-ligatures: none;
+  padding: 0.1em 0.5em;
+  border: 2px solid;
+  border-radius: 4px;
+  background: var(--papel-2);
+  white-space: pre;
+}
+.lista-desafio.deve li { color: var(--verde); }
+.lista-desafio.nao-deve li { color: var(--vermelho); border-style: dashed; }
+.lista-desafio li.ok { background: var(--verde-fundo); }
+.lista-desafio li.falhou { background: var(--vermelho-fundo); }
+.lista-desafio li::before { margin-right: 0.3em; }
+.lista-desafio li.ok::before { content: '✓'; }
+.lista-desafio li.falhou::before { content: '✗'; }
+.cronometro {
+  font-family: var(--f-codigo);
+  font-weight: 700;
+  font-size: 1.3rem;
+  color: var(--tinta-forte);
+}
+.cronometro.acabando { color: var(--vermelho); }
+.resultado-envio { font-weight: 700; margin: 0.6rem 0 0; }
+.resultado-envio.ok { color: var(--verde); }
+.resultado-envio.nao { color: var(--vermelho); }
+
+/* Telão */
+.telao {
+  min-height: 100%;
+  padding: clamp(1rem, 3vh, 2rem) clamp(1rem, 4vw, 3.5rem);
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(280px, 2fr);
+  gap: clamp(1rem, 3vw, 3rem);
+  align-items: start;
+}
+.telao h1 { font-size: clamp(2rem, 4vw, 3.4rem); margin-bottom: 0.3rem; }
+.telao .pin-grande {
+  font-family: var(--f-codigo);
+  font-weight: 700;
+  font-size: clamp(3rem, 8vw, 6.5rem);
+  letter-spacing: 0.12em;
+  line-height: 1;
+  color: var(--tinta-forte);
+  background: var(--marca);
+  color: var(--marca-texto);
+  display: inline-block;
+  padding: 0.05em 0.2em;
+  border-radius: 6px;
+}
+.telao .entrada {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 1rem 0;
+}
+.telao .desafio-titulo { font-size: clamp(1.6rem, 3vw, 2.6rem); margin: 0.2rem 0; }
+.telao .lista-desafio li { font-size: clamp(1rem, 1.8vw, 1.5rem); }
+.telao .controles { display: flex; gap: 0.6rem; flex-wrap: wrap; margin: 1rem 0; }
+.telao .solucao code { font-size: 1.3rem; }
+.ranking {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  counter-reset: pos;
+}
+.ranking li {
+  counter-increment: pos;
+  display: grid;
+  grid-template-columns: 2.2em minmax(0, 1fr) auto;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid var(--grade);
+  font-size: 1.15rem;
+}
+.ranking li::before {
+  content: counter(pos) 'º';
+  font-family: var(--f-codigo);
+  color: var(--texto-suave);
+}
+.ranking li:nth-child(1) { background: color-mix(in srgb, var(--marca) 45%, transparent); font-weight: 700; }
+.ranking .apelido { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ranking .pts { font-family: var(--f-codigo); font-weight: 700; }
+.ranking .ganho { color: var(--verde); font-size: 0.85rem; margin-left: 0.4rem; }
+.estado-conexao { color: var(--texto-suave); font-size: 0.9rem; }
+
+@media (max-width: 860px) {
+  .telao { grid-template-columns: minmax(0, 1fr); }
+  .controle-jogo { flex-direction: column; align-items: stretch; }
+}

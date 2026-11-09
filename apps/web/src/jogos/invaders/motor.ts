@@ -37,6 +37,11 @@ export interface Estado {
   aviso: string;
 }
 
+/** Largura aproximada da palavra na tela, em % da arena (ícone + texto + margens). */
+export function larguraEstimada(texto: string): number {
+  return Math.min(70, 9 + texto.length * 1.9);
+}
+
 export function criarEstado(): Estado {
   return { status: 'inicio', fase: 0, palavras: [], pontos: 0, vidas: VIDAS_INICIAIS, destruidasFase: 0, ateSurgir: 800, proximoId: 1, aviso: '' };
 }
@@ -85,7 +90,9 @@ export function passo(e: Estado, dtMs: number, aleatorio: () => number): Estado 
     const inimiga = aleatorio() < 0.6;
     const lista = inimiga ? fase.inimigas : fase.aliadas;
     const texto = lista[Math.floor(aleatorio() * lista.length) % lista.length];
-    palavras.push({ id: proximoId++, texto, inimiga, x: 4 + aleatorio() * 72, y: 0, atingida: 0 });
+    // Sorteia x de modo que a palavra inteira caiba (palavras longas nascem mais à esquerda).
+    const x = 3 + aleatorio() * Math.max(0, 94 - larguraEstimada(texto));
+    palavras.push({ id: proximoId++, texto, inimiga, x, y: 0, atingida: 0 });
     ateSurgir = intervalo(e.fase);
   }
 

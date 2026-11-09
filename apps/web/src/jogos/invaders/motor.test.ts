@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { criarEstado, iniciarJogo, passo, disparar, ALTURA, VIDAS_INICIAIS, ALVOS_POR_FASE, type Estado } from './motor.ts';
+import { criarEstado, iniciarJogo, passo, disparar, larguraEstimada, ALTURA, VIDAS_INICIAIS, ALVOS_POR_FASE, type Estado } from './motor.ts';
 import { FASES } from './fases.ts';
 
 const sempre = (v: number) => () => v;
@@ -108,4 +108,12 @@ test('cada fase é vencível pela sua solução de referência', () => {
     assert.ok(f.inimigas.every((s) => re.test(s)), `${f.nome}: alguma inimiga não casa`);
     assert.ok(!f.aliadas.some((s) => re.test(s)), `${f.nome}: alguma aliada casa`);
   }
+});
+
+test('palavra longa surge inteira dentro da arena (não corta na borda direita)', () => {
+  const e = { ...iniciarJogo(criarEstado()), fase: 2, ateSurgir: 1 };
+  // aleatório alto: sorteia aliada (>= 0.6), a última da lista e a posição mais à direita
+  const d = passo(e, 10, () => 0.999);
+  const p = d.palavras[0];
+  assert.ok(p.x + larguraEstimada(p.texto) <= 97, `x=${p.x} texto=${p.texto}`);
 });

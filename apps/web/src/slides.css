@@ -430,3 +430,9 @@ textarea.log { font-size: 0.82rem; white-space: pre; overflow-x: auto; }
 .demo-teoria { display: grid; gap: 0.6rem; }
 .teoria-cadeia { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 0.8rem; align-items: end; }
 .teoria-cadeia .tabela { font-size: 0.9rem; }
+
+/* Folga no palco para o slide do léxico (17 tokens em 2 a 3 linhas). */
+.com-palco .tokens { margin: 0.6rem 0; gap: 0.35rem; }
+.com-palco .token { padding: 0.1rem 0.45rem 0.05rem; }
+.com-palco .token .lexema { font-size: 1.2rem; }
+.com-palco .exemplos-linha { margin: 0.5rem 0; }
